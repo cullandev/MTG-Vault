@@ -30,7 +30,16 @@ jobs:
       - name: mypy
         run: docker compose -f docker-compose.test.yml run --rm tests python -m mypy
       - name: pytest
-        run: docker compose -f docker-compose.test.yml run --rm tests python -m pytest -q
+        run: |
+          set -o pipefail
+          docker compose -f docker-compose.test.yml run --rm tests python -m pytest -q -rf 2>&1 | tee pytest.log
+      # Job logs are only visible to signed-in users; annotations show on the
+      # run summary for everyone, so a red badge explains itself.
+      - name: Annotate failures
+        if: failure()
+        run: |
+          grep -E '^(FAILED|ERROR) ' pytest.log | sed 's/^/::error title=pytest::/' || true
+          grep -E '^E  ' pytest.log | head -40 | sed 's/^/::warning title=pytest detail::/' || true
 
   frontend:
     name: Frontend (lint, test, build)
