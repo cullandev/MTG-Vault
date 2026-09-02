@@ -39,11 +39,11 @@ Open a terminal (PowerShell on Windows, Terminal on macOS) in the folder where
 you keep projects, and run:
 
 ```bash
-git clone https://github.com/cullandev/mtg-vault.git
+git clone https://github.com/cullandev/MTG-public.git
 ```
 
 ```bash
-cd mtg-vault
+cd MTG-public
 ```
 
 Every later command in this guide is run from inside that folder.
@@ -165,14 +165,22 @@ Step 3 is the one everyone misses. Without it, Safari still refuses the site.
 
 **Android**
 
-Settings → Security → Encryption & credentials → Install a certificate → CA
-certificate → choose the downloaded file. Android warns that a third party
-could monitor your traffic; that warning is describing your own certificate.
+Chrome saves the file to your Downloads. Then: Settings → Security →
+Encryption & credentials → Install a certificate → CA certificate → choose
+`ca.crt`. The exact menu path varies by manufacturer and Android version
+(Samsung puts it under Security and privacy → Other security settings →
+Install from device storage); searching Settings for "CA certificate" finds
+it on any of them. Android warns that a third party could monitor your
+traffic; that warning is describing your own certificate, and is expected.
+
+Use Chrome on Android, not a manufacturer's own browser or Firefox: Chrome is
+the one that trusts a certificate you installed this way and offers the
+install-as-app prompt below.
 
 Now open **`https://<LAN_IP>`** on the phone. No warning, and the camera will
 work. To make it feel like an app, use **Share → Add to Home Screen** in
-Safari, or the install prompt in Chrome. It then opens full screen with its
-own icon.
+Safari, or in Chrome the **⋮** menu → **Install app** (older versions say
+**Add to Home screen**). It then opens full screen with its own icon.
 
 ### Step 7 — Optional: AI games
 
