@@ -1,0 +1,30 @@
+{
+  "results": {
+    "included": [
+      {
+        "id": "450-1658",
+        "identity": "C",
+        "uses": [
+          {"card": {"name": "Basalt Monolith"}},
+          {"card": {"name": "Rings of Brighthearth"}}
+        ],
+        "produces": [
+          {"feature": {"name": "Infinite colorless mana"}}
+        ]
+      }
+    ],
+    "almostIncluded": [
+      {
+        "id": "1122-3344",
+        "identity": "WU",
+        "uses": [
+          {"card": {"name": "Sol Ring"}},
+          {"card": {"name": "Lightning Bolt"}}
+        ],
+        "produces": [
+          {"feature": {"name": "Infinite pretend value"}}
+        ]
+      }
+    ]
+  }
+}

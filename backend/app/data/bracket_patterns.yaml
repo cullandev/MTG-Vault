@@ -1,0 +1,37 @@
+# Oracle-text patterns behind the Commander Bracket signals (ARCHITECTURE.md §6).
+#
+# Patterns are Python regexes matched case-insensitively against oracle text with
+# reminder text stripped. Every entry carries the card that motivated it, so a
+# pattern is never a guess. Game Changers are NOT here: they come from Scryfall's
+# `game_changer` boolean on the oracle row, not from text matching.
+
+extra_turn:
+  # Time Walk, Time Warp, Temporal Manipulation: "Take an extra turn after this one."
+  - "take (an|two|three) extra turns?"
+  # Magistrate's Scepter, Emrakul trigger phrasing: "takes an extra turn".
+  - "takes? (an|two) extra turns?"
+
+mass_land_denial:
+  # Armageddon: "Destroy all lands."
+  - "destroy all lands"
+  # Ravages of War / Catastrophe wording: "destroy each land".
+  - "destroy (all|each) (land|lands)"
+  # Ruination: "Destroy all nonbasic lands."
+  - "destroy all nonbasic lands"
+  # Winter Orb: "lands don't untap during their controllers' untap steps"
+  # (Static Orb-style hard mana lock counts; Blood Moon does NOT -- changing what
+  # lands produce is not denying them, and the tests pin that.)
+  - "lands don'?t untap"
+  # Sunder / Boil-style mass bounce or sacrifice of lands.
+  - "return all lands"
+  - "sacrifices? (all|that many) lands"
+
+tutor:
+  # Demonic Tutor: "Search your library for a card".
+  # The negative lookahead keeps land fetch out: "basic land card" (Rampant
+  # Growth), "land card" (Ghostly Flicker-adjacent wordings), and the basic land
+  # type names (Flooded Strand: "an Island or Plains card") are mana development,
+  # and WotC's bracket guidance does not count them as tutors.
+  # "number of" covers Boundless Realms ("search your library for a number of
+  # basic land cards equal to..."), which is ramp, not tutoring.
+  - "search your library for (a|an|up to \\w+) (?!basic land|land card|number of|plains|island|swamp|mountain|forest|wastes)"

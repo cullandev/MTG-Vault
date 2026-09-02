@@ -1,0 +1,12 @@
+{
+  "name": "Bruna Reanimator",
+  "commanders": {
+    "bruna": {"quantity": 1, "card": {"name": "Bruna, the Fading Light"}}
+  },
+  "mainboard": {
+    "sol-ring": {"quantity": 1, "card": {"name": "Sol Ring"}},
+    "aether-vial": {"quantity": 1, "card": {"name": "Aether Vial"}},
+    "island": {"quantity": 30, "card": {"name": "Island"}}
+  },
+  "sideboard": {}
+}

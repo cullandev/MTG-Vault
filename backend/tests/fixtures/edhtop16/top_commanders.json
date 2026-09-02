@@ -1,0 +1,110 @@
+{
+  "data": {
+    "commanders": {
+      "edges": [
+        {
+          "node": {
+            "name": "Bruna, the Fading Light",
+            "colorId": "W",
+            "stats": {
+              "count": 40,
+              "metaShare": 0.081,
+              "topCuts": 6
+            },
+            "entries": {
+              "edges": [
+                {
+                  "node": {
+                    "standing": 1,
+                    "decklist": "https://moxfield.com/decks/abc123XYZ",
+                    "player": {
+                      "name": "Alice"
+                    },
+                    "tournament": {
+                      "name": "Weekly cEDH",
+                      "tournamentDate": "2026-08-20",
+                      "size": 32
+                    },
+                    "maindeck": [
+                      {
+                        "name": "Sol Ring",
+                        "oracleId": "aaaa1111-0000-4000-8000-000000000018"
+                      },
+                      {
+                        "name": "Island",
+                        "oracleId": null
+                      }
+                    ]
+                  }
+                },
+                {
+                  "node": {
+                    "standing": 4,
+                    "decklist": "https://moxfield.com/decks/def456UVW",
+                    "player": {
+                      "name": "Bob"
+                    },
+                    "tournament": {
+                      "name": "Monthly Open",
+                      "tournamentDate": "2026-08-13",
+                      "size": 64
+                    },
+                    "maindeck": [
+                      {
+                        "name": "Sol Ring",
+                        "oracleId": "aaaa1111-0000-4000-8000-000000000018"
+                      },
+                      {
+                        "name": "Island",
+                        "oracleId": null
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "node": {
+            "name": "Gisela, the Broken Blade",
+            "colorId": "W",
+            "stats": {
+              "count": 22,
+              "metaShare": 0.044,
+              "topCuts": 2
+            },
+            "entries": {
+              "edges": [
+                {
+                  "node": {
+                    "standing": 9,
+                    "decklist": "https://moxfield.com/decks/ghi789RST",
+                    "player": {
+                      "name": "Carol"
+                    },
+                    "tournament": {
+                      "name": "Weekly cEDH",
+                      "tournamentDate": "2026-08-20",
+                      "size": 32
+                    },
+                    "maindeck": [
+                      {
+                        "name": "Sol Ring",
+                        "oracleId": "aaaa1111-0000-4000-8000-000000000018"
+                      },
+                      {
+                        "name": "Island",
+                        "oracleId": null
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

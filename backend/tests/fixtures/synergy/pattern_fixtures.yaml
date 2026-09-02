@@ -1,0 +1,134 @@
+# Per pattern id: positive and negative fixture cards with real oracle wording.
+# Every entry in synergy_patterns.yaml MUST appear here with both lists non-empty.
+
+sac-outlet:
+  positive:
+    - name: Viscera Seer
+      text: "Sacrifice a creature: Scry 1."
+    - name: Ashnod's Altar
+      text: "Sacrifice a creature: Add {C}{C}."
+  negative:
+    # Sacrifices only itself: a one-shot, not an outlet (the test plan's named trap).
+    - name: Blood Pet
+      text: "Sacrifice Blood Pet: Add {B}."
+
+death-payoff:
+  positive:
+    - name: Blood Artist
+      text: "Whenever Blood Artist or another creature dies, target player loses 1 life and you gain 1 life."
+    - name: Zulaport Cutthroat
+      text: "Whenever Zulaport Cutthroat or another creature you control dies, each opponent loses 1 life and you gain 1 life."
+  negative:
+    - name: Doom Blade
+      text: "Destroy target nonblack creature."
+
+recursion-engine:
+  positive:
+    - name: Nim Deathmantle
+      text: "Whenever a nontoken creature dies, you may pay {4}. If you do, return it to the battlefield and attach Nim Deathmantle to it."
+  negative:
+    - name: Raise Dead
+      text: "Return target creature card from your graveyard to your hand."
+
+token-maker:
+  positive:
+    - name: Krenko, Mob Boss
+      text: "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control."
+  negative:
+    - name: Treasure Map
+      text: "{1}, {T}: Scry 1. Put a landmark counter on Treasure Map."
+
+go-wide-payoff:
+  positive:
+    - name: Cathars' Crusade
+      text: "Whenever a creature you control enters, put a +1/+1 counter on each creature you control."
+    - name: Intangible Virtue
+      text: "Creatures you control get +1/+1 and have vigilance."
+  negative:
+    - name: Lightning Bolt
+      text: "Lightning Bolt deals 3 damage to any target."
+
+counters-producer:
+  positive:
+    - name: Kalonian Hydra
+      text: "Whenever Kalonian Hydra attacks, put a +1/+1 counter on each creature you control... puts a +1/+1 counter"
+  negative:
+    - name: Giant Growth
+      text: "Target creature gets +3/+3 until end of turn."
+
+proliferate:
+  positive:
+    - name: Evolution Sage
+      keywords: [Proliferate]
+      text: "Whenever a land you control enters, proliferate."
+  negative:
+    - name: Grizzly Bears
+      text: ""
+
+counters-doubler:
+  positive:
+    - name: Doubling Season
+      text: "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead. If an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead."
+    - name: Hardened Scales
+      text: "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead."
+  negative:
+    - name: Divination
+      text: "Draw two cards."
+
+planeswalker-type:
+  positive:
+    - name: Teferi, Hero of Dominaria
+      type: "Legendary Planeswalker — Teferi"
+  negative:
+    - name: Grizzly Bears
+      type: "Creature — Bear"
+
+treasure-maker:
+  positive:
+    - name: Dockside Extortionist
+      text: "When Dockside Extortionist enters, create X Treasure tokens, where X is the number of artifacts and enchantments your opponents control."
+  negative:
+    - name: Sol Ring
+      text: "{T}: Add {C}{C}."
+
+artifact-sac-payoff:
+  positive:
+    - name: Krark-Clan Ironworks
+      text: "Sacrifice an artifact: Add {C}{C}."
+    - name: Disciple of the Vault
+      text: "Whenever an artifact is put into a graveyard from the battlefield, you may have target opponent lose 1 life."
+  negative:
+    - name: Arcane Signet
+      text: "{T}: Add one mana of any color in your commander's color identity."
+
+graveyard-filler:
+  positive:
+    - name: Stitcher's Supplier
+      text: "When Stitcher's Supplier enters or dies, mill three cards."
+  negative:
+    - name: Opt
+      text: "Scry 1. Draw a card."
+
+graveyard-payoff:
+  positive:
+    - name: Reanimate
+      text: "Return target creature card from your graveyard to the battlefield. You lose life equal to its mana value."
+  negative:
+    - name: Regrowth
+      text: "Return target card from your graveyard to your hand."
+
+lifegain-trigger:
+  positive:
+    - name: Soul Warden
+      text: "Whenever another creature enters, you gain 1 life."
+  negative:
+    - name: Grizzly Bears
+      text: ""
+
+lifegain-payoff:
+  positive:
+    - name: Ajani's Pridemate
+      text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate."
+  negative:
+    - name: Lone Missionary
+      text: "When Lone Missionary enters, you gain 4 life."

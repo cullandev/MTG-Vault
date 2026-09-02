@@ -1,0 +1,166 @@
+# The mechanical synergy pattern table (ADR-018).
+#
+# Each entry tags cards by what they *do*, and edges are derived from
+# enabler/payoff tag pairings -- adding a pattern here is a data edit plus a
+# fixture pair in tests/fixtures/synergy/pattern_fixtures.yaml (the test suite
+# fails any entry without both a positive and a negative fixture). Regexes run
+# against oracle text with reminder text stripped, case-insensitive, and are
+# timing-bounded at load.
+#
+# Fields: id, tag, match ({oracle_regex | type_regex | keyword}), role
+# (enabler | payoff | both), pairs_with (tags this role connects to), weight,
+# note (the card that motivated the entry).
+
+- id: sac-outlet
+  tag: sac_outlet
+  match:
+    # Viscera Seer "Sacrifice a creature: Scry 1"; Ashnod's Altar "Sacrifice a
+    # creature: Add {C}{C}". Deliberately NOT "Sacrifice <this>": a card that
+    # sacrifices only itself (Blood Pet) is a one-shot, not an outlet.
+    oracle_regex: "sacrifice (a|another) creature"
+  role: enabler
+  pairs_with: [death_payoff, recursion_engine]
+  weight: 1.0
+  note: Viscera Seer
+
+- id: death-payoff
+  tag: death_payoff
+  match:
+    # Blood Artist "Whenever Blood Artist or another creature dies"; Nim
+    # Deathmantle's return trigger; Zulaport Cutthroat.
+    oracle_regex: "whenever ([\\w' ]+ or )?(a|another) (nontoken )?creature( you control)? dies"
+  role: payoff
+  pairs_with: [sac_outlet, token_maker]
+  weight: 1.0
+  note: Blood Artist
+
+- id: recursion-engine
+  tag: recursion_engine
+  match:
+    # Nim Deathmantle "return it to the battlefield"; Mikaeus-style rebuys.
+    oracle_regex: "return (it|that card) (from your graveyard )?to the battlefield"
+  role: payoff
+  pairs_with: [sac_outlet]
+  weight: 0.9
+  note: Nim Deathmantle
+
+- id: token-maker
+  tag: token_maker
+  match:
+    # Krenko-style "create ... creature token(s)".
+    oracle_regex: "creates? .{0,40}creature tokens?"
+  role: enabler
+  pairs_with: [go-wide_payoff, death_payoff, sac_outlet]
+  weight: 0.9
+  note: Krenko, Mob Boss
+
+- id: go-wide-payoff
+  tag: go-wide_payoff
+  match:
+    # Cathars' Crusade "Whenever a creature you control enters, put a +1/+1
+    # counter on each creature you control"; anthems "creatures you control get".
+    oracle_regex: "(whenever a creature( you control)? enters|creatures you control get \\+)"
+  role: payoff
+  pairs_with: [token_maker]
+  weight: 1.0
+  note: Cathars' Crusade
+
+- id: counters-producer
+  tag: counters_producer
+  match:
+    # Anything placing +1/+1 counters repeatably.
+    oracle_regex: "puts? (a|one or more|x|two|that many) \\+1/\\+1 counters?"
+  role: enabler
+  pairs_with: [proliferate_payoff, counters_payoff]
+  weight: 0.9
+  note: Kalonian Hydra
+
+- id: proliferate
+  tag: proliferate_payoff
+  match:
+    keyword: Proliferate
+  role: payoff
+  pairs_with: [counters_producer, planeswalker]
+  weight: 1.0
+  note: Evolution Sage
+
+- id: counters-doubler
+  tag: counters_payoff
+  match:
+    # Doubling Season "twice that many of each of those counters"; Hardened
+    # Scales-style "one more".
+    oracle_regex: "(twice that many .{0,20}counters|that many plus one|an additional \\+1/\\+1 counter)"
+  role: payoff
+  pairs_with: [counters_producer, token_maker, planeswalker]
+  weight: 1.0
+  note: Doubling Season
+
+- id: planeswalker-type
+  tag: planeswalker
+  match:
+    type_regex: "Planeswalker"
+  role: enabler
+  pairs_with: [proliferate_payoff, counters_payoff]
+  weight: 0.8
+  note: any planeswalker (loyalty counters feed proliferate and doublers)
+
+- id: treasure-maker
+  tag: treasure_maker
+  match:
+    # Dockside Extortionist, Smothering Tithe: "create ... Treasure token".
+    oracle_regex: "creates? .{0,30}treasure tokens?"
+  role: enabler
+  pairs_with: [artifact_payoff]
+  weight: 1.0
+  note: Dockside Extortionist
+
+- id: artifact-sac-payoff
+  tag: artifact_payoff
+  match:
+    # Krark-Clan Ironworks "Sacrifice an artifact: Add {C}{C}"; Disciple of the
+    # Vault-style triggers on artifacts hitting graveyards.
+    oracle_regex: "(sacrifice an artifact:|whenever an artifact( you control)? is put into a graveyard)"
+  role: payoff
+  pairs_with: [treasure_maker]
+  weight: 1.0
+  note: Krark-Clan Ironworks
+
+- id: graveyard-filler
+  tag: gy_filler
+  match:
+    # Stitcher's Supplier "mill"; entomb-style "put ... into your graveyard".
+    oracle_regex: "(mills? (\\w+ )?cards?|put .{0,40}from your library into your graveyard)"
+  role: enabler
+  pairs_with: [gy_payoff]
+  weight: 0.8
+  note: Stitcher's Supplier
+
+- id: graveyard-payoff
+  tag: gy_payoff
+  match:
+    # Reanimator effects: "return target creature card from your graveyard to
+    # the battlefield"; delve/escape are keyworded.
+    oracle_regex: "return target .{0,30}card from (your|a) graveyard to the battlefield"
+  role: payoff
+  pairs_with: [gy_filler]
+  weight: 1.0
+  note: Reanimate
+
+- id: lifegain-trigger
+  tag: lifegain_enabler
+  match:
+    oracle_regex: "you gain \\d+ life"
+  role: enabler
+  pairs_with: [lifegain_payoff]
+  weight: 0.7
+  note: Soul Warden
+
+- id: lifegain-payoff
+  tag: lifegain_payoff
+  match:
+    # Ajani's Pridemate "Whenever you gain life".
+    oracle_regex: "whenever you gain life"
+  role: payoff
+  pairs_with: [lifegain_enabler]
+  weight: 1.0
+  note: Ajani's Pridemate

@@ -1,0 +1,50 @@
+# Runs the backend test suite inside the same base image the app ships in, which is
+# the only environment that can honestly claim the OCR tests pass: it has the
+# tesseract binary and the DejaVu fonts the synthetic card renderer uses.
+#
+#   docker compose -f docker-compose.test.yml build tests
+#   docker compose -f docker-compose.test.yml run --rm tests
+#
+# The frontend gates run the same way, on a host that needs no node installed:
+#
+#   docker compose -f docker-compose.test.yml run --rm web npm ci
+#   docker compose -f docker-compose.test.yml run --rm web npm run check
+#
+# The source tree is bind-mounted over the copy baked into the image, so editing a
+# test or a module and re-running picks the change up without a rebuild. Rebuild only
+# when a dependency in pyproject.toml changes.
+#
+# Nothing here touches ./data or the real .env.
+
+services:
+  tests:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: tests
+    environment:
+      SECRET_KEY: test-secret-key-0123456789abcdef
+      APP_PASSWORD: correct-horse-battery
+      DATA_DIR: /tmp/mtgvault-test
+      ENABLE_SCHEDULER: "false"
+    volumes:
+      # Writable, not read-only: the same mount is how `ruff --fix` and
+      # `ruff format` are run against the tree.
+      - ./backend/app:/srv/app
+      - ./backend/tests:/srv/tests
+      - ./backend/alembic:/srv/alembic
+
+  web:
+    image: node:22-alpine
+    working_dir: /web
+    volumes:
+      - ./frontend:/web
+      # node_modules lives in a named volume so an `npm ci` inside the container does
+      # not litter the host tree, and does not have to be repeated every run.
+      - web-node-modules:/web/node_modules
+    environment:
+      CI: "true"
+    command: ["npm", "run", "check"]
+
+volumes:
+  web-node-modules:

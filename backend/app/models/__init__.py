@@ -1,0 +1,143 @@
+"""SQLAlchemy models.
+
+Importing this package registers every table on :data:`app.models.base.Base.metadata`,
+which is what Alembic's autogenerate and the test harness both rely on.
+"""
+
+from app.models.base import Base, utcnow, utctoday
+from app.models.battles import BattleResult, GauntletRun
+from app.models.cards import (
+    COLOR_BITS,
+    Card,
+    CardFace,
+    CardHash,
+    Legality,
+    LegalityChange,
+    OracleCard,
+    color_mask,
+)
+from app.models.collection import (
+    CONDITIONS,
+    FINISHES,
+    AuditLog,
+    CollectionItem,
+    WishlistItem,
+)
+from app.models.decks import (
+    BOARDS,
+    DECK_SOURCES,
+    Deck,
+    DeckAllocation,
+    DeckCard,
+    DeckValidation,
+)
+from app.models.meta import (
+    MEASUREMENTS,
+    TEMPLATE_TIERS,
+    ArchetypeTemplate,
+    ArchetypeTemplateCard,
+    CoverageResult,
+    MetaArchetype,
+    MetaDecklist,
+    MetaDecklistCard,
+    MetaSnapshot,
+)
+from app.models.pricing import (
+    ALERT_DIRECTIONS,
+    ALERT_SCOPES,
+    NOTIFICATION_KINDS,
+    CollectionValueSnapshot,
+    Notification,
+    PriceAlert,
+    PriceMovement,
+    PriceSnapshot,
+)
+from app.models.rating import (
+    AiCache,
+    DeckScore,
+    EdhrecCommander,
+    EdhrecCooccurrence,
+    SpellbookCombo,
+    SpellbookComboCard,
+)
+from app.models.scan import SCAN_METHODS, IdempotencyKey, ScanEvent, ScanSession
+from app.models.synergy import (
+    TAG_SOURCES,
+    CardTag,
+    SynergyCore,
+    SynergyCoreCard,
+    SynergyEdge,
+)
+from app.models.system import (
+    AppUser,
+    ImageCacheEntry,
+    ImportRun,
+    JobRun,
+    Session,
+    Setting,
+)
+
+__all__ = [
+    "ALERT_DIRECTIONS",
+    "ALERT_SCOPES",
+    "BOARDS",
+    "COLOR_BITS",
+    "CONDITIONS",
+    "DECK_SOURCES",
+    "FINISHES",
+    "MEASUREMENTS",
+    "NOTIFICATION_KINDS",
+    "SCAN_METHODS",
+    "TAG_SOURCES",
+    "TEMPLATE_TIERS",
+    "AiCache",
+    "AppUser",
+    "ArchetypeTemplate",
+    "ArchetypeTemplateCard",
+    "AuditLog",
+    "Base",
+    "BattleResult",
+    "Card",
+    "CardFace",
+    "CardHash",
+    "CardTag",
+    "CollectionItem",
+    "CollectionValueSnapshot",
+    "CoverageResult",
+    "Deck",
+    "DeckAllocation",
+    "DeckCard",
+    "DeckScore",
+    "DeckValidation",
+    "EdhrecCommander",
+    "EdhrecCooccurrence",
+    "GauntletRun",
+    "IdempotencyKey",
+    "ImageCacheEntry",
+    "ImportRun",
+    "JobRun",
+    "Legality",
+    "LegalityChange",
+    "MetaArchetype",
+    "MetaDecklist",
+    "MetaDecklistCard",
+    "MetaSnapshot",
+    "Notification",
+    "OracleCard",
+    "PriceAlert",
+    "PriceMovement",
+    "PriceSnapshot",
+    "ScanEvent",
+    "ScanSession",
+    "Session",
+    "Setting",
+    "SpellbookCombo",
+    "SpellbookComboCard",
+    "SynergyCore",
+    "SynergyCoreCard",
+    "SynergyEdge",
+    "WishlistItem",
+    "color_mask",
+    "utcnow",
+    "utctoday",
+]

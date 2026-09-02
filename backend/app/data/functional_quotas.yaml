@@ -1,0 +1,37 @@
+# Functional quotas the deck assembler fills after the synergy core is seated
+# (ARCHITECTURE.md module layout; used by services/synergy/assemble.py).
+#
+# Counts are for a 100-card Commander deck and scale linearly for other sizes.
+# "tags" are the classifier tags (services/rating/classify.py) that satisfy a
+# quota; lands are handled separately by the basic fill.
+
+# 60-card constructed shapes (casual house games and sanctioned formats alike):
+# fewer lands, interaction-heavy, no ramp package by default.
+constructed_default:
+  lands: 24
+  quotas:
+    - name: removal
+      tags: [removal, counterspell]
+      count: 8
+    - name: draw
+      tags: [draw]
+      count: 6
+    - name: wipes
+      tags: [mass_removal]
+      count: 2
+
+commander:
+  lands: 36
+  quotas:
+    - name: ramp
+      tags: [ramp]
+      count: 10
+    - name: draw
+      tags: [draw]
+      count: 10
+    - name: removal
+      tags: [removal, counterspell]
+      count: 8
+    - name: wipes
+      tags: [mass_removal]
+      count: 3

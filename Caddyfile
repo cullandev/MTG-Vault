@@ -1,0 +1,84 @@
+# MTG Vault reverse proxy.
+#
+# TLS comes from Caddy's internal CA (ADR-002). The root CA lives in
+# ./data/caddy/data/caddy/pki/authorities/local/root.crt and must be installed and
+# explicitly trusted on every phone -- see README.md. HTTPS is not optional: the
+# scanner needs getUserMedia, which browsers refuse outside a secure context.
+#
+# The site answers on TWO addresses, and the certificate covers both:
+#
+#   {$LAN_HOSTNAME}  the machine name. Convenient from other Windows machines, but
+#                    phones usually cannot resolve a bare Windows/NetBIOS name --
+#                    they have no NetBIOS or LLMNR resolver. Give it a static DNS
+#                    entry on the router if you want it to work from the phone.
+#   {$LAN_IP}        the machine's LAN address. Needs no name resolution at all,
+#                    which makes it the reliable way in from a phone. Set it to a
+#                    *static* or DHCP-reserved address, or the certificate stops
+#                    matching the next time the lease moves.
+#
+# Do NOT use a .local name -- it collides with mDNS resolution (ADR-002).
+
+{
+	# No public ACME account is ever created; everything is issued locally.
+	email admin@localhost
+	# Browsers do not (and per RFC 6066 must not) send SNI when connecting to an
+	# IP address, and without SNI Caddy has no way to pick a certificate. This
+	# names the IP site as the default, which is exactly the connection a phone
+	# makes to https://{$LAN_IP}.
+	default_sni {$LAN_IP:127.0.0.1}
+
+	# HTTP/1.1 and HTTP/2 only -- deliberately NOT h3.
+	#
+	# Caddy listens for QUIC inside the container and advertises
+	# `Alt-Svc: h3=":443"; ma=2592000` on every response, but compose publishes
+	# `443:443`, and Docker publishes TCP unless a mapping says otherwise. So
+	# UDP/443 never reached the container: every browser was told HTTP/3 was
+	# available here and any that believed it sent QUIC into a void, for the
+	# thirty days that max-age claims. Firefox adopts h3 most eagerly, which is
+	# why it stopped reaching the server while the phone never noticed.
+	#
+	# On a LAN, h3 buys nothing worth this. Publishing 443:443/udp would be the
+	# other way to make the advertisement true; not advertising it is simpler
+	# and has no moving parts to get wrong.
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$LAN_HOSTNAME:vault.home.arpa}, {$LAN_IP:127.0.0.1} {
+	tls internal
+
+	encode zstd gzip
+
+	# Hashed asset filenames are immutable; index.html and the service worker are not.
+	@immutable path /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	@nocache path / /index.html /sw.js /manifest.webmanifest
+	header @nocache Cache-Control "no-cache"
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+		-Server
+	}
+
+	# Scan uploads are small JPEGs; anything larger is a bug or an attack.
+	request_body {
+		max_size 8MB
+	}
+
+	reverse_proxy app:8000
+
+	log {
+		output file /data/access.log {
+			roll_size 10MB
+			roll_keep 5
+		}
+	}
+}
+
+# Plain HTTP exists only to redirect; it cannot serve the app (secure context).
+http://{$LAN_HOSTNAME:vault.home.arpa}, http://{$LAN_IP:127.0.0.1} {
+	redir https://{host}{uri} permanent
+}

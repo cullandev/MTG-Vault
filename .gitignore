@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+frontend/dist/
+.vite/
+
+# Runtime data (bind-mounted DATA_DIR). ANCHORED with a leading slash: the
+# unanchored "data/" matched at every depth, which silently untracked
+# backend/app/data/ -- the synergy patterns, functional quotas, bracket
+# patterns and CSV flavours. Those are the deck engine's rules, not runtime
+# state, and they went unversioned (and unbackupable) for the whole project.
+/data/
+*.db
+*.db-wal
+*.db-shm
+
+# Local env
+.env
+.env.local
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+backend/devdata/
+backend/.venv/
+.env.dev
+frontend/node_modules/
+mtgvault-root.crt

@@ -1,0 +1,36 @@
+{
+  "container": {
+    "json_dict": {
+      "card": {"name": "Atraxa, Praetors' Voice"},
+      "cardlists": [
+        {
+          "header": "High Synergy Cards",
+          "cardviews": [
+            {"name": "Deepglow Skate", "num_decks": 8400, "potential_decks": 10000, "synergy": 0.61},
+            {"name": "Fire // Ice", "num_decks": 400, "potential_decks": 10000, "synergy": 0.02}
+          ]
+        },
+        {
+          "header": "Top Cards",
+          "cardviews": [
+            {"name": "Sol Ring", "num_decks": 9900, "potential_decks": 10000, "synergy": 0.01},
+            {"name": "Astral Cornucopia", "num_decks": 3100, "potential_decks": 10000, "synergy": 0.22},
+            {"name": "Nameless Wonder", "num_decks": 10, "potential_decks": 0, "synergy": 0.0}
+          ]
+        },
+        {
+          "header": "New Cards",
+          "cardviews": [
+            {"name": "Shiny Chaff", "num_decks": 12, "potential_decks": 300, "synergy": 0.0}
+          ]
+        }
+      ]
+    }
+  },
+  "panels": {
+    "taglinks": [
+      {"value": "+1/+1 Counters"},
+      {"value": "Superfriends"}
+    ]
+  }
+}

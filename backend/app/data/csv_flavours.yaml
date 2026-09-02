@@ -1,0 +1,171 @@
+# Collection CSV flavours.
+#
+# Each flavour maps the columns other collection managers export onto the fields the
+# importer needs. Adding support for another site is a data edit plus a fixture, not a
+# code change.
+#
+# `columns` values are matched case-insensitively against the CSV header, first match
+# wins. `condition` and `language` maps translate site-specific vocabularies; anything
+# not in a map falls through to the default.
+
+version: 1
+
+conditions_canonical: [NM, LP, MP, HP, DMG]
+
+flavours:
+  native:
+    label: MTG Vault
+    detect: [oracle_id, set_code, collector_number, finish]
+    columns:
+      quantity: [quantity, count]
+      name: [name]
+      set_code: [set_code]
+      set_name: [set_name]
+      collector_number: [collector_number]
+      condition: [condition]
+      language: [language, lang]
+      finish: [finish]
+      is_proxy: [proxy, is_proxy]
+      purchase_price: [purchase_price, acquired_price]
+      notes: [notes]
+      oracle_id: [oracle_id]
+    finish_map:
+      "": nonfoil
+      normal: nonfoil
+      nonfoil: nonfoil
+      foil: foil
+      etched: etched
+    condition_map: {}
+    language_map: {}
+    truthy: ["true", "yes", "1", "proxy"]
+
+  moxfield:
+    label: Moxfield
+    detect: ["tradelist count", "last modified", name, edition]
+    columns:
+      quantity: [count, quantity]
+      name: [name]
+      set_code: [edition]
+      collector_number: ["collector number"]
+      condition: [condition]
+      language: [language]
+      finish: [foil, finish]
+      is_proxy: [proxy]
+      purchase_price: ["purchase price"]
+      notes: [tags]
+    finish_map:
+      "": nonfoil
+      normal: nonfoil
+      foil: foil
+      etched: etched
+      "etched foil": etched
+    condition_map:
+      nm: NM
+      lp: LP
+      mp: MP
+      hp: HP
+      dmg: DMG
+      "near mint": NM
+      "lightly played": LP
+      "moderately played": MP
+      "heavily played": HP
+      damaged: DMG
+    language_map:
+      english: en
+      japanese: ja
+      german: de
+      french: fr
+      italian: it
+      spanish: es
+      portuguese: pt
+      russian: ru
+      korean: ko
+      "chinese simplified": zhs
+      "chinese traditional": zht
+    truthy: ["true", "yes", "1", "proxy"]
+
+  archidekt:
+    label: Archidekt
+    detect: [quantity, finish, "edition code", "scryfall id"]
+    columns:
+      quantity: [quantity, count]
+      name: [name]
+      set_code: ["edition code", "set code"]
+      set_name: ["edition name", "set name"]
+      collector_number: ["collector number", "card number"]
+      condition: [condition]
+      language: [language]
+      finish: [finish, foil]
+      is_proxy: [proxy]
+      purchase_price: ["purchase price"]
+      notes: [tags]
+      scryfall_id: ["scryfall id"]
+    finish_map:
+      "": nonfoil
+      normal: nonfoil
+      nonfoil: nonfoil
+      foil: foil
+      etched: etched
+    condition_map:
+      nm: NM
+      lp: LP
+      mp: MP
+      hp: HP
+      d: DMG
+      dmg: DMG
+    language_map:
+      en: en
+      english: en
+      ja: ja
+      jp: ja
+      de: de
+      fr: fr
+      it: it
+      es: es
+      pt: pt
+      ru: ru
+      ko: ko
+    truthy: ["true", "yes", "1", "proxy"]
+
+  deckbox:
+    label: Deckbox
+    detect: ["tradelist count", "card number", "printing id", edition]
+    columns:
+      quantity: [count, quantity]
+      name: [name]
+      set_name: [edition]
+      collector_number: ["card number"]
+      condition: [condition]
+      language: [language]
+      finish: [foil]
+      is_proxy: [proxy]
+      purchase_price: ["my price"]
+      notes: ["printing note", tags]
+    finish_map:
+      "": nonfoil
+      foil: foil
+      etched: etched
+    condition_map:
+      mint: NM
+      "near mint": NM
+      "good (lightly played)": LP
+      good: LP
+      "lightly played": LP
+      played: MP
+      "moderately played": MP
+      "heavily played": HP
+      poor: DMG
+      damaged: DMG
+    language_map:
+      english: en
+      japanese: ja
+      german: de
+      french: fr
+      italian: it
+      spanish: es
+      portuguese: pt
+      russian: ru
+      korean: ko
+      "chinese simplified": zhs
+      "chinese traditional": zht
+    truthy: ["true", "yes", "1", "proxy"]

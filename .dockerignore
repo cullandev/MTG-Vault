@@ -1,0 +1,18 @@
+# Build context hygiene: without this every docker build ships the virtualenv, the
+# node_modules tree and the entire data directory to the daemon.
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.coverage
+frontend/dist
+data/
+backend/devdata/
+.git/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.dev

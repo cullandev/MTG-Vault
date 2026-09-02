@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-vault-bg: #0b0e14;
+  --color-vault-panel: #131924;
+  --color-vault-line: #1e2836;
+}
+
+/* Respect the notch on iOS when the app is installed to the home screen. */
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Touch targets stay finger-sized; the builder has to be usable one-handed. */
+@utility tap {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+@utility card-surface {
+  background-color: var(--color-vault-panel);
+  border: 1px solid var(--color-vault-line);
+  border-radius: 0.75rem;
+}
+
+/* A number floating up off the table: life lost, damage marked. Named here so
+   Tailwind's arbitrary animate-[float-up_...] has something to run. */
+@keyframes float-up {
+  from { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  70%  { opacity: 1; }
+  to   { opacity: 0; transform: translate(-50%, -46px) scale(1.15); }
+}
+
+/* The realm's weather on the Arena's table (components/Atmosphere.tsx). From
+   the owner's playmat package: embers rise, snow falls, fireflies drift, mist
+   slides, light rays sway. */
+@keyframes pmGlow { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes pmRise { 0% { transform: translate(0, 0) scale(.6); opacity: 0; } 12% { opacity: 1; } 85% { opacity: .7; } 100% { transform: translate(var(--dx), -1000px) scale(1.1); opacity: 0; } }
+@keyframes pmFall { 0% { transform: translate(0, -60px); opacity: 0; } 10% { opacity: .95; } 100% { transform: translate(var(--dx), 1100px); opacity: .4; } }
+@keyframes pmFloat { 0%, 100% { transform: translate(0, 0); opacity: .15; } 30% { opacity: 1; } 50% { transform: translate(var(--dx), var(--dy)); opacity: .35; } 75% { opacity: .9; } }
+@keyframes pmMist { 0% { transform: translateX(-6%); } 100% { transform: translateX(6%); } }
+@keyframes pmRay { 0%, 100% { opacity: .18; transform: skewX(-12deg) translateX(0); } 50% { opacity: .5; transform: skewX(-12deg) translateX(40px); } }
+
+/* The turn banner's sweep and punch, and the red flush when you take damage
+   (components/TurnBanner.tsx, components/CombatFx.tsx). */
+@keyframes pmSweep { 0% { transform: scaleX(0); opacity: 0; } 18% { transform: scaleX(1); opacity: 1; } 80% { opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+@keyframes pmPunch { 0% { opacity: 0; transform: scale(1.6); } 60% { opacity: 1; transform: scale(.96); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes pmBannerFade { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes pmFlush { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes pmBannerIn { 0% { opacity: 0; } 100% { opacity: 1; } }

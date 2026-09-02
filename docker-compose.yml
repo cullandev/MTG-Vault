@@ -1,0 +1,84 @@
+# Container stdout accumulates under /var/lib/docker forever by default; on a
+# homelab host that is the most likely way the disk fills. Same rotation for
+# every service.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    logging: *default-logging
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      STATIC_DIR: /srv/static
+    volumes:
+      - ./data:/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Forge battle sidecar (ADR-031). Opt-in: start with
+  #   docker compose --profile battles up -d forge
+  # and set ENABLE_FORGE=true in .env. The default stack never runs it.
+  forge:
+    # Context is the repo root: the image carries both the sidecar shim
+    # (docker/forge) and the practice bridge's Java sources
+    # (docker/forge-bridge), which are compiled in a throwaway JDK stage.
+    build:
+      context: .
+      dockerfile: docker/forge/Dockerfile
+    profiles: ["battles"]
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      FORGE_HEAP: 4g
+      FORGE_TIMEOUT_S: "900"
+      # Heap for one watched or played game. Smaller than FORGE_HEAP because a
+      # single game is not a 27-game gauntlet.
+      BRIDGE_HEAP: 2g
+    volumes:
+      - ./data/forge:/data
+    expose:
+      - "8080"
+    # The shim's server is threaded now, but a loaded sidecar (4g heap mid-sim)
+    # can still answer slowly, so the probe keeps its long timeout and generous
+    # retries: "busy simulating" must never be diagnosed as "down" and
+    # restarted mid-game.
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=10).status == 200 else 1)"]
+      interval: 60s
+      timeout: 15s
+      retries: 15
+      start_period: 60s
+
+  caddy:
+    image: caddy:2-alpine
+    # --watch reloads the Caddyfile when it changes on disk; without it a
+    # `compose up` leaves the running container on the old config (the file is
+    # bind-mounted, so recreation never triggers) and route edits silently
+    # never take effect.
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile --watch
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      - app
+    env_file: .env
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
