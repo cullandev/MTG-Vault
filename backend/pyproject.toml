@@ -112,6 +112,9 @@ filterwarnings = [
     # the clients/ package is written against. The warning is about starlette's own
     # test helper, not about our HTTP usage.
     "ignore::starlette.exceptions.StarletteDeprecationWarning",
+    # anyio 4.15 deprecates the anyio.abc.BlockingPortal alias that starlette's
+    # TestClient still imports. Same shape as above: their helper, not our code.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
 ]
 addopts = "-q --strict-markers"
 markers = [
