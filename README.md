@@ -20,9 +20,6 @@ co-occurrence), and Phase 6: an installable PWA and the wishlist/buy-list — se
 |---|---|
 | [GETTING-STARTED.md](GETTING-STARTED.md) | Step by step from nothing to a running vault, for someone who has never run a Docker project, then a tour of the pages |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Component diagram, request flows, full schema, API contract, job schedule, config surface |
-| [DECISIONS.md](DECISIONS.md) | 32 ADRs — every non-obvious choice, with the alternatives and why they lost |
-| [TEST-PLAN.md](TEST-PLAN.md) | Per-phase test plan, plus the MTG rules edge cases enumerated by name |
-| [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) | Outstanding questions and the recommendations that were accepted |
 | [CHANGELOG.md](CHANGELOG.md) | What each phase delivered |
 
 ---
