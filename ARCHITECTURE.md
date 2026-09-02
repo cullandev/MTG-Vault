@@ -880,7 +880,7 @@ All configuration is environment variables read once into a pydantic-settings ob
 ```
 mtg-vault/
   docker-compose.yml          Caddyfile          .env.example
-  README.md  ARCHITECTURE.md  DECISIONS.md  TEST-PLAN.md  CHANGELOG.md
+  README.md  GETTING-STARTED.md  ARCHITECTURE.md  CHANGELOG.md  CONTRIBUTING.md  SECURITY.md
   docker/forge/               Dockerfile server.py   # battle sidecar (ADR-031)
   backend/
     Dockerfile   pyproject.toml   alembic.ini   alembic/versions/
@@ -972,3 +972,48 @@ Every external service subclasses one base class that provides, in this order:
   image-cache size, per-source circuit-breaker state, AI token spend this month.
 - **Scan accuracy** — `first_match_accuracy` over 7/30 days, plus method mix and
   latency percentiles, surfaced on the dashboard so OCR degradation is visible.
+
+---
+
+## 11. Decision records
+
+Comments in the code, the Caddyfile and the compose files cite `ADR-nnn`. The
+full records — context, options weighed, consequences — are kept out of this
+repository; this index gives each number its decision so a citation can be read
+in place. The section of this document that expands on it is noted where one
+exists.
+
+| ADR | Decision | See |
+|---|---|---|
+| 001 | SQLite over PostgreSQL, with a PostgreSQL escape hatch | §3 |
+| 002 | HTTPS via Caddy's internal CA on a LAN hostname; never a `.local` name | §1, `Caddyfile` |
+| 003 | OpenCV.js memory is managed by a scope helper, not by discipline | superseded by 022/024 |
+| 004 | Streaming Scryfall bulk import with `ijson`, so memory stays flat | §5 |
+| 005 | One row per physical copy | §3.2 |
+| 006 | A printing's natural key is `(set_code, collector_number, lang)` | §3.1 |
+| 007 | Tesseract first, PaddleOCR behind a flag | §2.1 |
+| 008 | Anthropic responses are constrained by a forced tool schema | §2.4 |
+| 009 | Prices come from the daily bulk file, and only for watched cards | §2.3, §3.3 |
+| 010 | Colour identity is read from Scryfall, never computed | §3.1 |
+| 011 | In-app notification inbox first; web push and email are optional deliveries | §3.8 |
+| 012 | pHash is keyed on `illustration_id`, not on printing | §2.1 |
+| 013 | Auth is a router-level dependency, opt-out not opt-in | §4.1 |
+| 014 | One uvicorn worker; the scheduler runs in-process | §5 |
+| 015 | Backups use `VACUUM INTO`, not file copy | §5 |
+| 016 | Meta sources are opt-in per source, scheduled-only, and legally isolated | §3.6, §9 |
+| 017 | "What is played" and "what wins" are different measurements and are labelled as such | §4.9 |
+| 018 | The synergy pattern table is data, not code (`app/data/synergy_patterns.yaml`) | §3.7 |
+| 019 | Generated decks are validated by the rules engine before they are returned | §4.9 |
+| 020 | Cursor pagination everywhere | §4 |
+| 021 | The frontend is a static build served by FastAPI, behind Caddy | §1 |
+| 022 | Card detection in plain TypeScript, not OpenCV.js | superseded by 024 |
+| 023 | Identify from the collector line first, and lock in on one frame | §2.1 |
+| 024 | All computer vision moves to the server; identify by ensemble | §2.1 |
+| 025 | Converge on one card; never open with a list | §2.1 |
+| 026 | Spend nothing on frames that cannot be read | §2.1 |
+| 027 | A z-score answers "which card", never "which printing" | §2.1 |
+| 028 | The set symbol is a second hash region, not a classifier | §2.1 |
+| 029 | The rules engine is pure, and the rules live in the cards | §6 |
+| 030 | Ratings report only what a card list can prove | §4.7 |
+| 031 | The app never rewrites the comprehensive rules; battles are analysis or an external engine (Forge) | §4.13 |
+| 032 | The gauntlet's ledger is computed, and its lessons live in settings | §4.15 |

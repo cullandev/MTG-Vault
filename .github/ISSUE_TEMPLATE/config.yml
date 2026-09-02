@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Getting started
+    url: https://github.com/cullandev/MTG-Vault/blob/main/GETTING-STARTED.md
+    about: Step by step from nothing to a running vault, with a troubleshooting table at the end.
+  - name: Security report
+    url: https://github.com/cullandev/MTG-Vault/security/advisories/new
+    about: Report a vulnerability privately rather than in a public issue.

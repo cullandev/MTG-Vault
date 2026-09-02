@@ -27,7 +27,7 @@ class AnthropicClient(ExternalClient):
     respect_robots: ClassVar[bool] = False
 
     def __init__(self, settings: Settings, **kwargs: Any) -> None:
-        super().__init__("MTGVault/0.1 (self-hosted deck review)", **kwargs)
+        super().__init__("MTGVault/1.0 (self-hosted deck review)", **kwargs)
         self._api_key = settings.anthropic_api_key or ""
         self.model = settings.anthropic_model
 

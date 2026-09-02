@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     """
 
     # --- scryfall -----------------------------------------------------------
-    scryfall_user_agent: str = "MTGVault/0.1 (self-hosted)"
+    scryfall_user_agent: str = "MTGVault/1.0 (self-hosted)"
     scryfall_min_interval_ms: int = 100
     scryfall_bulk_type: Literal["default_cards", "all_cards", "oracle_cards"] = "default_cards"
 

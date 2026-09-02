@@ -1,0 +1,23 @@
+name: Feature request
+description: Something the vault could do that fits a single-user, LAN-only collection manager.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to do with your collection or decks that the vault makes hard today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: How you imagine it working. Point at the page or CLI command it would live in.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: This does not require accounts, cloud sync, or exposing the app to the internet (see "What this is not" in README.md).
+          required: true

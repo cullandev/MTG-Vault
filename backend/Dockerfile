@@ -48,6 +48,10 @@ RUN apt-get update \
 
 RUN pip install --no-cache-dir ".[dev]"
 COPY backend/tests ./tests
+# The practice-name tests import the Forge sidecar shim by path, relative to the
+# repository root -- which is / in here. docker-compose.test.yml bind-mounts the
+# same file over this copy so edits are picked up without a rebuild.
+COPY docker/forge/server.py /docker/forge/server.py
 
 ENV DATA_DIR=/tmp/mtgvault-test \
     ENABLE_SCHEDULER=false

@@ -1,5 +1,8 @@
 # MTG Vault
 
+[![CI](https://github.com/cullandev/MTG-Vault/actions/workflows/ci.yml/badge.svg)](https://github.com/cullandev/MTG-Vault/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A self-hosted web application for managing a Magic: The Gathering collection and
 building decks from it. Runs on your own hardware, reachable from a desktop browser
 and a phone, with no cloud dependency beyond the public card-data APIs.
@@ -19,8 +22,33 @@ co-occurrence), and Phase 6: an installable PWA and the wishlist/buy-list — se
 | Document | What is in it |
 |---|---|
 | [GETTING-STARTED.md](GETTING-STARTED.md) | Step by step from nothing to a running vault, for someone who has never run a Docker project, then a tour of the pages |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Component diagram, request flows, full schema, API contract, job schedule, config surface |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Component diagram, request flows, full schema, API contract, job schedule, config surface, and an index of the decision records the code cites |
 | [CHANGELOG.md](CHANGELOG.md) | What each phase delivered |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | The gates a change must pass, and the conventions |
+| [SECURITY.md](SECURITY.md) | The threat model (one person, one LAN) and how to report a problem |
+
+## What it looks like
+
+The library, with every owned printing priced from Scryfall's daily bulk data:
+
+![Library grid](docs/screenshots/library.jpg)
+
+A built Commander deck — physical copies allocated so the same card is never sleeved
+in two decks, legality checked by the rules engine, and a power read with a bracket:
+
+![Deck page](docs/screenshots/deck.jpg)
+
+| Card page: legalities, every printing, your copies | Home: value, movers, recent additions |
+|---|---|
+| ![Card page](docs/screenshots/card.jpg) | ![Home dashboard](docs/screenshots/home.jpg) |
+
+<p align="center">
+  <img src="docs/screenshots/phone-library.jpg" width="300" alt="The library on a phone, installed as a PWA">
+</p>
+
+The screenshots come from a fresh install seeded with a small demo collection; the
+Battles and Arena pages need the optional Forge sidecar and are described in
+[GETTING-STARTED.md](GETTING-STARTED.md).
 
 ---
 

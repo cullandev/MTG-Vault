@@ -40,7 +40,7 @@ that an attacker stays its own card while blockers are declared; what counts as
 "identical" is ours, from the fields Forge sends.
 
 Their engine is not used. The vault plays through Forge; see
-`docker/forge-bridge/README.md` for how, and DECISIONS.md ADR-031 for why the
+`docker/forge-bridge/README.md` for how, and ADR-031 (summarised in ARCHITECTURE.md) for why the
 rules stay in an external engine and phase.rs was measured rather than adopted.
 
 ### MIT License

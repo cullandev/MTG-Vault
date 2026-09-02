@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0 — public release
+
+- **Version strings agree with the README.** `pyproject.toml`, `package.json`,
+  `/health` and the Scryfall `User-Agent` all say 1.0 now, matching "every
+  planned phase is complete".
+- **The test image can run the whole suite.** `tests/unit/rating/test_practice_names.py`
+  loads the Forge sidecar shim by path from the repository root, and that
+  file was never copied into the `tests` stage nor mounted by
+  `docker-compose.test.yml`, so the documented "honest" way to run the backend
+  suite failed fourteen tests that pass from a host virtualenv. The image now
+  carries `docker/forge/server.py` and the compose service bind-mounts it.
+- **CI.** A GitHub Actions workflow runs the same four backend gates in that
+  image, `npm run check` on Node 22, and builds the runtime image.
+- **Repository hygiene.** `CONTRIBUTING.md`, `SECURITY.md` (the threat model:
+  one person, one LAN, `AUTH_DISABLED` by default), issue forms and a pull
+  request template. `ARCHITECTURE.md` gains an index of every `ADR-nnn` the
+  code cites, since the full decision records are not published.
+- **Renamed repository.** Links and the clone command point at
+  `cullandev/MTG-Vault`.
+
 ## The practice table gets its decks back
 
 - **Your decks now reach the picker.** Forge relocates any deck whose file

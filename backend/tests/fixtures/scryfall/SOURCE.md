@@ -4,7 +4,7 @@
 
 **What it is.** A hand-authored bulk-data array, structurally faithful to Scryfall's
 card object, chosen so that every layout and colour-identity edge case in
-`TEST-PLAN.md` §1 is covered by at least one row.
+the project's test plan is covered by at least one row.
 
 **Provenance.** Hand-authored 2026-08-22 against the card-object schema documented at
 <https://scryfall.com/docs/api/cards>. Card names, type lines, mana costs and colour

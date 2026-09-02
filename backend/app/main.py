@@ -29,7 +29,7 @@ from app.logging_setup import configure_logging, request_id_var
 from app.models import GauntletRun, JobRun, utcnow
 from app.services import auth
 
-VERSION = "0.1.0"
+VERSION = "1.0.0"
 
 ORPHAN_REASON = "interrupted by an application restart"
 

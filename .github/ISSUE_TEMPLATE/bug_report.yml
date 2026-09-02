@@ -1,0 +1,41 @@
+name: Bug report
+description: Something does not work the way the documentation says it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what happened instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Setup / Docker / certificate
+        - Import (CSV, bulk data)
+        - Phone scanner
+        - Library / collection / history
+        - Decks / rules engine / allocation
+        - Meta / suggested decks / synergy
+        - Battles / Arena (Forge sidecar)
+        - Pricing / backups / System page
+        - PWA / install on phone
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Host OS, Docker version (`docker compose version`), browser and phone model if relevant, and the commit (`git rev-parse --short HEAD`).
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Output of `docker compose logs --tail 100 app`. For scanner problems, set `SCAN_DEBUG_FRAMES=12` in `.env`, restart, reproduce, and attach a frame from `data/scan-debug/`.
+      render: text

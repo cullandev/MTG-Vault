@@ -33,6 +33,9 @@ services:
       - ./backend/app:/srv/app
       - ./backend/tests:/srv/tests
       - ./backend/alembic:/srv/alembic
+      # tests/unit/rating/test_practice_names.py loads the Forge sidecar shim by
+      # path from the repository root, which is / inside the image.
+      - ./docker/forge:/docker/forge:ro
 
   web:
     image: node:22-alpine

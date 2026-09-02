@@ -39,11 +39,11 @@ Open a terminal (PowerShell on Windows, Terminal on macOS) in the folder where
 you keep projects, and run:
 
 ```bash
-git clone https://github.com/cullandev/MTG-public.git
+git clone https://github.com/cullandev/MTG-Vault.git
 ```
 
 ```bash
-cd MTG-public
+cd MTG-Vault
 ```
 
 Every later command in this guide is run from inside that folder.
