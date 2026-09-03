@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     """
 
     # --- scryfall -----------------------------------------------------------
-    scryfall_user_agent: str = "MTGVault/1.0 (self-hosted)"
+    scryfall_user_agent: str = "MTGVault/1.1 (self-hosted)"
     scryfall_min_interval_ms: int = 100
     scryfall_bulk_type: Literal["default_cards", "all_cards", "oracle_cards"] = "default_cards"
 
@@ -89,6 +89,10 @@ class Settings(BaseSettings):
     meta_sources_enabled: str = "edhtop16"
     """Comma-separated opt-in list, read through the ``meta_sources`` property
     by the snapshot job and System status (ADR-016)."""
+    top_deck_formats: str = "Modern,Standard"
+    """Comma-separated 60-card formats whose MTGO Challenge results become playable
+    decks, when ``mtgo`` is among the meta sources. Read through
+    ``top_deck_format_list``."""
 
     # --- Forge battle sidecar (ADR-031) -------------------------------------
     enable_forge: bool = False
@@ -152,6 +156,11 @@ class Settings(BaseSettings):
     def meta_sources(self) -> tuple[str, ...]:
         """Meta sources the operator has explicitly opted into (ADR-016)."""
         return tuple(s.strip() for s in self.meta_sources_enabled.split(",") if s.strip())
+
+    @property
+    def top_deck_format_list(self) -> tuple[str, ...]:
+        """The 60-card formats to keep top decks for, capitalised as MTGO names them."""
+        return tuple(s.strip().capitalize() for s in self.top_deck_formats.split(",") if s.strip())
 
     def ensure_directories(self) -> None:
         """Create every directory the application writes to."""

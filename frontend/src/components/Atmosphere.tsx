@@ -30,6 +30,7 @@ export default function Atmosphere({ realm }: { realm: Realm }) {
       top,
       height: '38%',
       filter: 'blur(28px)',
+      willChange: 'transform',
       opacity: 0.7,
       background: `radial-gradient(ellipse 30% 60% at 20% 50%, ${color} 0%, transparent 70%), radial-gradient(ellipse 35% 70% at 55% 40%, ${color} 0%, transparent 70%), radial-gradient(ellipse 28% 60% at 85% 60%, ${color} 0%, transparent 70%)`,
       animation: `pmMist ${dur}s ease-in-out infinite alternate`,
@@ -95,6 +96,7 @@ export default function Atmosphere({ realm }: { realm: Realm }) {
           height: '140%',
           background: 'linear-gradient(180deg, rgba(220,245,230,.35), transparent 70%)',
           filter: 'blur(10px)',
+          willChange: 'transform',
           animation: `pmRay ${8 + i * 1.7}s ease-in-out ${-i * 2}s infinite`,
         })
       }
@@ -162,6 +164,7 @@ export default function Atmosphere({ realm }: { realm: Realm }) {
           height: '140%',
           background: 'linear-gradient(180deg, rgba(255,230,160,.32), transparent 65%)',
           filter: 'blur(14px)',
+          willChange: 'transform',
           animation: `pmRay ${10 + i * 2}s ease-in-out ${-i * 3}s infinite`,
         })
       }

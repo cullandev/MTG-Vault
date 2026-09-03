@@ -250,13 +250,22 @@ There are three ways, and you can mix them.
 - **Battles** (needs Step 7) runs AI-versus-AI games between your decks, and
   a weekly gauntlet that pits them against the current tournament meta so you
   can see which of your decks actually wins.
-- **Arena** (needs Step 7) is where you play. Pick your deck, an opponent, a
+- **Arena** (needs Step 7) is where you play. The start panel has two seats,
+  **You play** and **The AI plays**: pick your deck, then an opponent of the
+  same format. Opponents include real tournament lists: the week's leading
+  cEDH decks arrive on their own after the Tuesday meta job, or press
+  **Pull top decks** to fetch them now; add `mtgo` to `META_SOURCES_ENABLED`
+  in `.env` and Modern and Standard Challenge winners come too. Choose the
+  AI's personality (Forge's Default, Cautious, Reckless or Experimental) and,
+  if you want a harder game, **Deeper thinking**, which is slower. Pick a
   playmat, type the name the table should call you, and press **Play**. Click
   cards to play them, click attackers to declare them, and use the buttons for
   everything else. Space passes, Enter ends the turn, Z undoes, Escape cancels.
   The turn track along the top shows where the game is; click a step to make
-  the game stop there. The computer plays at a pace you can watch; tick
-  **Fast game** if you would rather it did not wait.
+  the game stop there. When the AI casts a spell it is shown large in the
+  middle of the table, and every card the log mentions can be hovered. The
+  computer plays at a pace you can watch; tick **Fast game** if you would
+  rather it did not wait.
 
 ### Keeping it healthy
 

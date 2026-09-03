@@ -8,18 +8,36 @@ import PlayMat, { type BoardState } from '../components/PlayMat'
 import { resetCardPositions } from '../lib/cardPositions'
 import { timelineRows, toneClass, type LogEntry } from '../lib/gameLog'
 import { primaryLabel, statusLine, tableMode } from '../lib/tableStatus'
-import { defaultOpponent, eligibleOpponents, opponentNote } from '../lib/opponents'
+import { defaultOpponent, eligibleOpponents, opponentNote, playable } from '../lib/opponents'
 import { REALMS, realmById, rememberRealm, rememberedRealm } from '../lib/playmats'
 import FloatingNumbers from '../components/FloatingNumbers'
 import TurnBanner, { type Announcement } from '../components/TurnBanner'
 import CombatFx from '../components/CombatFx'
 import TableFx from '../components/TableFx'
 import GameOverBanner from '../components/GameOverBanner'
+import LogText from '../components/LogText'
+import SpellShowcase from '../components/SpellShowcase'
+import { boardCardNames } from '../lib/cardMentions'
 import { combatCallout } from '../lib/phaseInfo'
 import { Button, Empty, ErrorNote, Panel, inputClass } from '../components/ui'
 
 /** Milliseconds the engine pauses after each AI play when the game is paced; mirrors PACE_MS in the backend. */
 const PACE_MS = 1000
+
+/** The format in a word: "Commander" or "60-card". */
+function formatWord(deck: Deck): string {
+  return deck.format.includes('commander') ? 'Commander' : '60-card'
+}
+
+/** Forge's AI personalities, its own res/ai/*.ai files. */
+const AI_PROFILES = ['Default', 'Cautious', 'Reckless', 'Experimental'] as const
+type AiProfile = (typeof AI_PROFILES)[number]
+const AI_PROFILE_NOTES: Record<AiProfile, string> = {
+  Default: 'holds creatures back from any even trade; attacks only when clearly ahead',
+  Cautious: 'more so: keeps blockers home and avoids risk',
+  Reckless: 'attacks into trades, mulligans less, races',
+  Experimental: "Forge's newest tuning: fights harder for planeswalkers and when in danger",
+}
 
 /** A question the engine is blocked on, waiting for the player. */
 interface Ask {
@@ -123,6 +141,34 @@ export default function ArenaPage() {
       // A private window forgets; the field still works for this game.
     }
   }
+  // The opponent's personality and how hard it thinks. Forge's Default
+  // profile holds creatures back from any even trade; Reckless attacks into
+  // them. The simulation picker plays candidate spells forward before choosing.
+  const [aiProfile, setAiProfile] = useState<AiProfile>(() => {
+    try {
+      const saved = localStorage.getItem('arena.ai')
+      return AI_PROFILES.includes(saved as AiProfile) ? (saved as AiProfile) : 'Default'
+    } catch {
+      return 'Default'
+    }
+  })
+  const [aiSimulation, setAiSimulation] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('arena.aiSim') === '1'
+    } catch {
+      return false
+    }
+  })
+  function chooseAi(profile: AiProfile, simulation: boolean) {
+    setAiProfile(profile)
+    setAiSimulation(simulation)
+    try {
+      localStorage.setItem('arena.ai', profile)
+      localStorage.setItem('arena.aiSim', simulation ? '1' : '0')
+    } catch {
+      // A private window forgets; the choice still holds for this game.
+    }
+  }
   const [since, setSince] = useState(0)
   const [board, setBoard] = useState<BoardState | null>(null)
   const [log, setLog] = useState<LogEntry[]>([])
@@ -206,6 +252,8 @@ export default function ArenaPage() {
         play,
         fast,
         name: name.trim() || undefined,
+        ai_profile: aiProfile,
+        ai_simulation: aiSimulation,
       }),
     onSuccess: (result) => {
       attach()
@@ -237,6 +285,26 @@ export default function ArenaPage() {
     setWatching(false)
     setBoard(null)
   }
+
+  // Pull the week's leading cEDH lists onto the shelf now, rather than
+  // waiting for Tuesday. The job is enqueued; the deck list refetches after.
+  const pullTop = useMutation({
+    mutationFn: () => api.post<{ enqueued: boolean }>('/api/meta/top-decks/refresh'),
+    onSuccess: () => {
+      window.setTimeout(() => decks.refetch(), 4000)
+    },
+  })
+
+  // Stable handlers for the table: its seats are memoised, and a new arrow
+  // on every render would undo that.
+  const actMutate = act.mutate
+  const onCardClick = useCallback((id: number) => actMutate('card:' + id), [actMutate])
+  const onPlayerClick = useCallback((seat: number) => actMutate('player:' + seat), [actMutate])
+  const onStopToggle = useCallback(
+    (whose: 'mine' | 'theirs', phase: string, on: boolean) =>
+      actMutate(`stop:${whose}:${phase}:${on ? 'on' : 'off'}`),
+    [actMutate],
+  )
 
   const stop = useMutation({
     mutationFn: () => api.post('/api/practice/watch/stop'),
@@ -313,6 +381,15 @@ export default function ArenaPage() {
   // never drawn -- which is what turns a page of "X's Upkeep step" back into
   // a readable account of the game.
   const rows = useMemo(() => timelineRows(log), [log])
+  const seenNames = useRef<Set<string>>(new Set())
+  const knownNames = useMemo(() => {
+    if (!board) {
+      seenNames.current = new Set()
+      return [] as string[]
+    }
+    for (const name of boardCardNames(board)) seenNames.current.add(name)
+    return [...seenNames.current]
+  }, [board])
 
   useEffect(() => {
     logEnd.current?.scrollIntoView({ block: 'nearest' })
@@ -430,16 +507,15 @@ export default function ArenaPage() {
   const disabled = start.error instanceof ApiError && start.error.code === 'battles_disabled'
   const deckOptions = useMemo(
     () =>
-      (decks.data?.decks ?? [])
-        // Your shelf: anything not archived, plus archived decks you have
-        // actually sleeved. "Built" alone would hide most of the vault --
-        // it means physically assembled, and Forge needs no such thing.
-        .filter((deck) => !deck.archived || deck.is_built)
-        .map((deck) => (
-          <option key={deck.id} value={deck.id}>
-            {deck.name}
-          </option>
-        )),
+      // Your shelf: your own decks and the real tournament lists, sleeved or
+      // not -- "built" means physically assembled, and Forge needs no such
+      // thing. The gauntlet's cuts are not offered.
+      playable(decks.data?.decks ?? []).map((deck) => (
+        <option key={deck.id} value={deck.id}>
+          {deck.name}
+          {opponentNote(deck) ? ' — top list' : ''}
+        </option>
+      )),
     [decks.data],
   )
   const opponents = useMemo(
@@ -449,6 +525,15 @@ export default function ArenaPage() {
   const suggested = useMemo(
     () => defaultOpponent(decks.data?.decks ?? [], deckId ? Number(deckId) : null),
     [decks.data, deckId],
+  )
+  // Who sits where, named, so the panel can say it in a sentence.
+  const myDeck = useMemo(
+    () => (deckId ? (decks.data?.decks ?? []).find((d) => d.id === Number(deckId)) ?? null : null),
+    [decks.data, deckId],
+  )
+  const theirDeck = useMemo(
+    () => (opponentId ? opponents.find((d) => d.id === Number(opponentId)) ?? null : suggested),
+    [opponents, opponentId, suggested],
   )
   // "Your move" is the engine's statement now, not the page's inference.
   // PlayerView.getHasPriority() says whether this seat holds priority; a
@@ -578,90 +663,153 @@ export default function ArenaPage() {
             <Button variant="ghost" onClick={() => stop.mutate()} disabled={stop.isPending}>
               {stop.isPending ? 'Stopping…' : 'Stop'}
             </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button onClick={() => start.mutate(true)} disabled={!deckId || start.isPending}>
-                {start.isPending ? 'Dealing…' : 'Play'}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => start.mutate(false)}
-                disabled={!deckId || start.isPending}
-              >
-                Watch
-              </Button>
-            </div>
-          )
+          ) : undefined
         }
       >
         {!watching && (
           <>
-            <p className="text-xs text-slate-500">
-              Your deck against a [Meta] opponent. <b className="text-slate-300">Play</b> seats you
-              in the first chair and the game stops for your decisions;{' '}
-              <b className="text-slate-300">Watch</b> lets Forge take both sides.
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-              <label className="flex items-center gap-2">
-                <span className="text-slate-400">You:</span>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(event) => chooseName(event.target.value.slice(0, 24))}
-                  placeholder="your name at the table"
-                  maxLength={24}
-                  className={`${inputClass} !w-40 !py-1`}
-                  title="What the log and the banners call you. Left blank, Forge picks a name of its own."
-                />
-              </label>
-              <span className="text-slate-400">Deck:</span>
-              <select
-                value={deckId}
-                onChange={(event) => {
-                  setDeckId(event.target.value)
-                  setOpponentId('')
-                }}
-                className={`${inputClass} !w-auto max-w-xs`}
+            <div className="grid gap-3 text-xs md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+              {/* Your seat, in the realm's light. */}
+              <section
+                className="rounded-xl border p-3"
+                style={{ borderColor: realm.accent, background: 'rgba(0,0,0,.25)' }}
+                aria-labelledby="seat-you"
               >
-                <option value="">(pick a deck)</option>
-                {deckOptions}
-              </select>
-              {deckId && (
-                <>
-                  <span className="text-slate-400">against:</span>
-                  <select
-                    value={opponentId}
-                    onChange={(event) => setOpponentId(event.target.value)}
-                    className={`${inputClass} !w-auto max-w-xs`}
-                    title="Any built deck of the same format. The [Meta 60] cuts are cEDH lists without their commanders; Forge's AI plays them poorly."
-                  >
-                    <option value="">
-                      {suggested ? `${suggested.name} (suggested)` : '(no deck of this format to play against)'}
-                    </option>
-                    {opponents.map((deck) => (
-                      <option key={deck.id} value={deck.id}>
-                        {deck.name}
-                        {opponentNote(deck) ? ` — ${opponentNote(deck)}` : ''}
+                <h3
+                  id="seat-you"
+                  className="text-[11px] font-bold uppercase [font-family:Cinzel,Georgia,serif] [letter-spacing:.2em]"
+                  style={{ color: realm.accent }}
+                >
+                  You play
+                </h3>
+                <div className="mt-2 flex flex-col gap-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-slate-400">Your deck</span>
+                    <select
+                      value={deckId}
+                      onChange={(event) => {
+                        setDeckId(event.target.value)
+                        setOpponentId('')
+                      }}
+                      className={`${inputClass} !py-1`}
+                    >
+                      <option value="">(pick the deck you will play)</option>
+                      {deckOptions}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-slate-400">Your name at the table</span>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(event) => chooseName(event.target.value.slice(0, 24))}
+                      placeholder="what the log and banners call you"
+                      maxLength={24}
+                      className={`${inputClass} !py-1`}
+                      title="Left blank, Forge picks a name of its own."
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <div className="hidden items-center justify-center md:flex">
+                <span className="text-lg font-bold uppercase text-slate-500 [font-family:Cinzel,Georgia,serif] [letter-spacing:.2em]">
+                  vs
+                </span>
+              </div>
+
+              {/* The AI's seat, in steel. */}
+              <section
+                className="rounded-xl border border-slate-600 p-3"
+                style={{ background: 'rgba(0,0,0,.25)' }}
+                aria-labelledby="seat-ai"
+              >
+                <h3
+                  id="seat-ai"
+                  className="text-[11px] font-bold uppercase text-slate-300 [font-family:Cinzel,Georgia,serif] [letter-spacing:.2em]"
+                >
+                  The AI plays
+                </h3>
+                <div className="mt-2 flex flex-col gap-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-slate-400">
+                      Its deck
+                      {myDeck && (
+                        <span className="text-slate-500"> · same format as yours: {formatWord(myDeck)}</span>
+                      )}
+                    </span>
+                    <select
+                      value={opponentId}
+                      onChange={(event) => setOpponentId(event.target.value)}
+                      className={`${inputClass} !py-1`}
+                      disabled={!deckId}
+                      title="Any deck of the same format as yours: your own, or a real cEDH top list. Only decks you can play appear."
+                    >
+                      <option value="">
+                        {!deckId
+                          ? '(pick your deck first)'
+                          : suggested
+                            ? `${suggested.name} (suggested)`
+                            : '(no deck of this format to play against)'}
                       </option>
-                    ))}
-                  </select>
-                </>
-              )}
-              <span className="text-slate-400">realm:</span>
-              <select
-                value={realmId}
-                onChange={(event) => chooseRealm(event.target.value)}
-                className={`${inputClass} !w-auto max-w-xs`}
-                title={`${realm.epithet} — ${realm.motto}`}
-              >
-                {REALMS.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} — {r.epithet}
-                  </option>
-                ))}
-              </select>
+                      {opponents.map((deck) => (
+                        <option key={deck.id} value={deck.id}>
+                          {deck.name}
+                          {opponentNote(deck) ? ` — ${opponentNote(deck)}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-slate-400">How it plays</span>
+                    <select
+                      value={aiProfile}
+                      onChange={(event) => chooseAi(event.target.value as AiProfile, aiSimulation)}
+                      className={`${inputClass} !py-1`}
+                      title={AI_PROFILE_NOTES[aiProfile]}
+                    >
+                      {AI_PROFILES.map((profile) => (
+                        <option key={profile} value={profile}>
+                          {profile} — {AI_PROFILE_NOTES[profile]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label
+                    className="flex cursor-pointer items-center gap-1.5 text-slate-400"
+                    title="The AI plays each candidate spell forward in a copy of the game before choosing. Noticeably slower to act, and marked experimental by Forge."
+                  >
+                    <input
+                      type="checkbox"
+                      checked={aiSimulation}
+                      onChange={(event) => chooseAi(aiProfile, event.target.checked)}
+                      className="accent-sky-500"
+                    />
+                    Deeper thinking (slower)
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            {/* The table itself. */}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+              <label className="flex items-center gap-2">
+                <span className="text-slate-400">Playmat</span>
+                <select
+                  value={realmId}
+                  onChange={(event) => chooseRealm(event.target.value)}
+                  className={`${inputClass} !w-auto max-w-xs !py-1`}
+                  title={`${realm.epithet} — ${realm.motto}`}
+                >
+                  {REALMS.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} — {r.epithet}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label
-                className="ml-1 flex cursor-pointer items-center gap-1.5 text-slate-400"
+                className="flex cursor-pointer items-center gap-1.5 text-slate-400"
                 title="Off: the engine pauses a beat after each of the AI's plays and combat steps so you can see what it did. On: Forge plays at full speed."
               >
                 <input
@@ -672,6 +820,51 @@ export default function ArenaPage() {
                 />
                 Fast game
               </label>
+              <Button
+                variant="ghost"
+                className="!py-1"
+                onClick={() => pullTop.mutate()}
+                disabled={pullTop.isPending}
+                title="Pull this week's leading cEDH tournament lists onto the shelf as playable decks; lists that fell out of the top are removed. Your own decks are never touched."
+              >
+                {pullTop.isPending ? 'Pulling…' : pullTop.isSuccess ? 'Top decks queued' : 'Pull top decks'}
+              </Button>
+            </div>
+
+            {/* What will happen, in a sentence, and the two ways to start it. */}
+            <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/40 px-3 py-2 text-xs">
+              <p className="min-w-0 flex-1 text-slate-300">
+                {!myDeck ? (
+                  'Pick the deck you will play.'
+                ) : !theirDeck ? (
+                  `No other ${formatWord(myDeck)} deck to play against.`
+                ) : (
+                  <>
+                    <b className="text-slate-100">{name.trim() || 'You'}</b> with{' '}
+                    <b style={{ color: realm.accent }}>{myDeck.name}</b> against{' '}
+                    <b className="text-slate-100">{theirDeck.name}</b>, played by Forge's {aiProfile} AI
+                    {aiSimulation ? ' with deeper thinking' : ''}. {formatWord(myDeck)}
+                    {fast ? ', full speed' : ', paced'}.
+                  </>
+                )}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => start.mutate(true)}
+                  disabled={!deckId || !theirDeck || start.isPending}
+                  title="You sit in the left seat with your deck; the game stops for your decisions."
+                >
+                  {start.isPending ? 'Dealing…' : 'Play'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => start.mutate(false)}
+                  disabled={!deckId || !theirDeck || start.isPending}
+                  title="Forge plays both seats -- your deck against the AI's -- and you watch."
+                >
+                  Watch AI vs AI
+                </Button>
+              </div>
             </div>
           </>
         )}
@@ -711,6 +904,7 @@ export default function ArenaPage() {
       <CombatFx board={board} version={since} tableRef={tableRef} />
       <TableFx board={board} version={since} tableRef={tableRef} />
       {finished && <GameOverBanner board={board} playing={playing} onOk={leave} />}
+      <SpellShowcase board={board} version={since} />
 
 
       {watching && board && (events.data?.error || staleForReal) && (
@@ -739,9 +933,9 @@ export default function ArenaPage() {
               playing={playing}
               yourTurn={playing && youAreActive}
               version={since}
-              onCard={(id) => act.mutate('card:' + id)}
-              onPlayer={(seat) => act.mutate('player:' + seat)}
-              onStop={(whose, phase, on) => act.mutate(`stop:${whose}:${phase}:${on ? 'on' : 'off'}`)}
+              onCard={onCardClick}
+              onPlayer={onPlayerClick}
+              onStop={onStopToggle}
               realm={realm}
               tableRef={tableRef}
             />
@@ -776,7 +970,7 @@ export default function ArenaPage() {
                     key={row.index}
                     className={`border-l-2 py-0.5 pl-1.5 ${toneClass(row.entry.type)}`}
                   >
-                    {row.entry.text}
+                    <LogText text={row.entry.text} known={knownNames} />
                   </p>
                 ),
               )}

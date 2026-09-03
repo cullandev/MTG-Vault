@@ -19,7 +19,7 @@ Treat it as LAN-only software.
 - Path traversal or arbitrary file read/write through imports, backups,
   exports, the image cache or the certificate route (`/ca.crt`).
 - Anything that lets a crafted CSV, decklist, scan upload or external API
-  response (Scryfall, EDHREC, Spellbook, edhtop16, Moxfield) execute code or
+  response (Scryfall, EDHREC, Spellbook, edhtop16, MTGO, Moxfield) execute code or
   corrupt the database.
 - Secrets leaking into logs, backups or exports.
 

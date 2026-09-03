@@ -22,14 +22,12 @@ export default function ZoneViewer({
   onClose,
   onCard,
   onHover,
-  hoveredId,
 }: {
   title: string
   cards: BoardCard[]
   onClose: () => void
   onCard?: (id: number) => void
   onHover: (card: BoardCard, rect: DOMRect | null, image?: string | null) => void
-  hoveredId: number | null
 }) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -81,7 +79,6 @@ export default function ZoneViewer({
                 size="hand"
                 onClick={onCard}
                 onHover={onHover}
-                hovered={hoveredId === card.id}
                 animate={false}
               />
             ))}

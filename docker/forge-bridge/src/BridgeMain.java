@@ -71,7 +71,7 @@ public final class BridgeMain {
         System.err.printf("[bridge] card database loaded in %d ms%n",
                 System.currentTimeMillis() - started);
 
-        // args: deck1 deck2 [out|-] [type] [seat1] [paceMs] [name]
+        // args: deck1 deck2 [out|-] [type] [seat1] [paceMs] [name] [aiProfile] [sim|nosim]
         //   seat1 = "human" puts a person in the first seat; anything else is
         //   the spectator case, both sides played by the AI.
         boolean human = args.length > 4 && "human".equalsIgnoreCase(args[4]);
@@ -104,18 +104,44 @@ public final class BridgeMain {
         gui.setPace(pace);
         System.err.printf("[bridge] pace %d ms%n", pace);
 
+        // args[7] = the AI's profile -- Default, Cautious, Reckless or
+        // Experimental, Forge's own res/ai/*.ai files; Reckless attacks into
+        // trades where Default holds back. args[8] = "sim" to give the AI
+        // Forge's simulation picker, which plays each candidate spell forward
+        // in a copied game before choosing: slower, and marked experimental
+        // upstream, so it is opt-in.
+        String aiProfile = args.length > 7 ? args[7].trim() : "";
+        boolean aiSimulation = args.length > 8 && "sim".equalsIgnoreCase(args[8].trim());
+        java.util.Set<forge.ai.AIOption> aiOptions = aiSimulation
+                ? java.util.EnumSet.of(forge.ai.AIOption.USE_FULL_SIMULATION)
+                : java.util.EnumSet.noneOf(forge.ai.AIOption.class);
+        System.err.printf("[bridge] ai profile %s, simulation %s%n",
+                aiProfile.isEmpty() ? "(preference)" : aiProfile, aiSimulation);
+
+        // args: deck1 deck2 [out|-] [Constructed|Commander]
+        GameType type = args.length > 3 && "Commander".equalsIgnoreCase(args[3])
+                ? GameType.Commander : GameType.Constructed;
+        System.err.println("[bridge] game type " + type);
+
         List<RegisteredPlayer> seats = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
             Deck deck = loadDeck(deckDir(home), args[i]);
             LobbyPlayer player = human && i == 0
                     ? forge.player.GamePlayerUtil.getGuiPlayer()
-                    : forge.player.GamePlayerUtil.createAiPlayer("AI " + (i + 1), i);
-            RegisteredPlayer seat = new RegisteredPlayer(deck).setPlayer(player);
+                    : forge.player.GamePlayerUtil.createAiPlayer("AI " + (i + 1), i, 0, aiOptions, aiProfile);
+            // Only forCommander moves the deck's [Commander] section into the
+            // command zone and sets 40 life. The plain constructor shuffles the
+            // commanders into a 100-card library and starts at 20 -- which is
+            // how every commander practice game had been played until now.
+            RegisteredPlayer seat = (type == GameType.Commander
+                    ? RegisteredPlayer.forCommander(deck)
+                    : new RegisteredPlayer(deck)).setPlayer(player);
             seat.setTeamNumber(i);
             seats.add(seat);
-            System.err.printf("[bridge] seat %d (%s): %s (%d cards)%n",
+            System.err.printf("[bridge] seat %d (%s): %s (%d cards, %d commanders)%n",
                     i + 1, human && i == 0 ? "human" : "ai", deck.getName(),
-                    deck.getMain().countAll());
+                    deck.getMain().countAll(),
+                    deck.has(forge.deck.DeckSection.Commander) ? deck.get(forge.deck.DeckSection.Commander).countAll() : 0);
         }
 
         // Answers arrive on stdin, one per line: "<askId>	<value>". stdin is
@@ -143,10 +169,6 @@ public final class BridgeMain {
         answers.setDaemon(true);
         answers.start();
 
-        // args: deck1 deck2 [out|-] [Constructed|Commander]
-        GameType type = args.length > 3 && "Commander".equalsIgnoreCase(args[3])
-                ? GameType.Commander : GameType.Constructed;
-        System.err.println("[bridge] game type " + type);
         GameRules rules = new GameRules(type);
         rules.setGamesPerMatch(1);
         HostedMatch match = new HostedMatch();

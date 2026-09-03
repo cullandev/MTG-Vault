@@ -261,6 +261,10 @@ def _bridge_stderr_reader(stream) -> None:
                 _bridge_stderr.append(line)
 
 
+#: Forge ships these under res/ai/*.ai; anything else falls back to Default.
+AI_PROFILES = ("Default", "Cautious", "Reckless", "Experimental")
+
+
 def _player_name(value: object) -> str:
     """A name Forge can wear: printable, one line, at most 24 characters."""
     text = "".join(
@@ -313,6 +317,10 @@ def bridge_start(payload: dict) -> dict:
         str(_as_int(str(payload.get("pace", 0)), 0)),
         # The person's name at the table; one line, printable, short.
         _player_name(payload.get("name")),
+        # The AI's personality (one of Forge's profile files) and whether it
+        # simulates its plays before choosing.
+        str(payload.get("ai_profile")) if payload.get("ai_profile") in AI_PROFILES else "Default",
+        "sim" if payload.get("ai_simulation") else "nosim",
     ]
     proc = subprocess.Popen(
         command,

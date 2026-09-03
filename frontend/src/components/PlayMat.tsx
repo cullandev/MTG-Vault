@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import PlayCard from './PlayCard'
 import Hand from './Hand'
@@ -124,6 +124,21 @@ export default function PlayMat({
   // the board -- which happens every time the bridge reports -- cannot blink
   // the preview out from under the pointer.
   const [hover, setHover] = useState<Hover | null>(null)
+  // Stable handlers, so a memoised seat is not re-rendered by a new arrow.
+  const openTheirs = useCallback(
+    (zone: 'graveyard' | 'exile') => {
+      const name = board.players.find((p) => !p.you)?.name
+      if (name) setOpen({ seat: name, zone })
+    },
+    [board.players],
+  )
+  const openMine = useCallback(
+    (zone: 'graveyard' | 'exile') => {
+      const name = board.players.find((p) => p.you)?.name
+      if (name) setOpen({ seat: name, zone })
+    },
+    [board.players],
+  )
   const closing = useRef<number | null>(null)
 
   useEffect(() => () => {
@@ -154,7 +169,6 @@ export default function PlayMat({
     [],
   )
 
-  const hoveredId = hover?.card.id ?? null
 
   return (
     // The ring lasts the whole turn, where the banner lasts seconds: a glance
@@ -201,8 +215,7 @@ export default function PlayMat({
           onCard={onCard}
           onPlayer={onPlayer}
           onHover={onHover}
-          hoveredId={hoveredId}
-          onOpen={(zone) => setOpen({ seat: them.name, zone })}
+          onOpen={openTheirs}
           opponent
         />
       )}
@@ -222,8 +235,7 @@ export default function PlayMat({
           onCard={onCard}
           onPlayer={onPlayer}
           onHover={onHover}
-          hoveredId={hoveredId}
-          onOpen={(zone) => setOpen({ seat: me.name, zone })}
+          onOpen={openMine}
         />
       )}
 
@@ -240,7 +252,6 @@ export default function PlayMat({
           onClose={() => setOpen(null)}
           onCard={playing ? onCard : undefined}
           onHover={onHover}
-          hoveredId={hoveredId}
         />
       )}
 
@@ -254,7 +265,6 @@ export default function PlayMat({
             playing={playing}
             onCard={onCard}
             onHover={onHover}
-            hoveredId={hoveredId}
           />
         </div>
       )}
@@ -295,7 +305,7 @@ function PhaseStrip({
     name + (onStop ? (stops.has(step) ? ' — stops here (click to skip)' : ' — skipped (click to stop here)') : '')
   return (
     <div
-      className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-y bg-black/55 px-3 py-1.5 text-xs backdrop-blur-[2px]"
+      className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-y bg-black/60 px-3 py-1.5 text-xs"
       style={{ borderColor: combat ? 'rgba(244,63,94,0.55)' : 'var(--pm-zone-stroke)', boxShadow: combat ? '0 0 22px rgba(244,63,94,0.35)' : '0 0 18px var(--pm-accent-glow)' }}
     >
       {/* A marker sliding along the bottom edge: how far through the turn. */}
@@ -398,14 +408,13 @@ function PhaseStrip({
 }
 
 /** One player's half of the table. */
-function SeatRow({
+const SeatRow = memo(function SeatRow({
   seat,
   board,
   playing,
   onCard,
   onPlayer,
   onHover,
-  hoveredId,
   onOpen,
   opponent = false,
 }: {
@@ -415,7 +424,6 @@ function SeatRow({
   onCard?: (id: number) => void
   onPlayer?: (seat: number) => void
   onHover: (card: BoardCard, rect: DOMRect | null, image?: string | null) => void
-  hoveredId: number | null
   onOpen?: (zone: 'graveyard' | 'exile') => void
   opponent?: boolean
 }) {
@@ -551,7 +559,6 @@ function SeatRow({
           size="small"
           onClick={clickable}
           onHover={onHover}
-          hovered={hoveredId === c.id}
         />
       ))}
     </div>
@@ -569,7 +576,6 @@ function SeatRow({
         width={cardWidth}
         onCard={clickable}
         onHover={onHover}
-        hoveredId={hoveredId}
         empty="nothing in play"
         expandAttackers={board.phase === 'COMBAT_DECLARE_BLOCKERS'}
         grow
@@ -580,7 +586,6 @@ function SeatRow({
         width={cardWidth}
         onCard={clickable}
         onHover={onHover}
-        hoveredId={hoveredId}
         empty="no lands"
       />
     </div>
@@ -599,7 +604,7 @@ function SeatRow({
       {opponent ? battlefield : header}
     </div>
   )
-}
+})
 
 /**
  * A zone as a count you can open. When the engine wants a card from it, the
@@ -647,7 +652,6 @@ function Row({
   cards,
   onCard,
   onHover,
-  hoveredId,
   empty,
   width,
   expandAttackers = false,
@@ -657,7 +661,6 @@ function Row({
   cards: BoardCard[]
   onCard?: (id: number) => void
   onHover: (card: BoardCard, rect: DOMRect | null, image?: string | null) => void
-  hoveredId: number | null
   empty: string
   /** Card width for this row, from the seat's measured band. */
   width: number
@@ -671,7 +674,7 @@ function Row({
       <p
         className={
           'rounded-xl border px-2 py-1 text-[10px] uppercase [font-family:Cinzel,Georgia,serif] [letter-spacing:.2em] [color:var(--pm-ink-soft)] ' +
-          (grow ? 'min-w-0 flex-1 basis-40' : 'shrink-0')
+          (grow ? 'min-w-0 flex-1 basis-40' : 'ml-auto shrink-0')
         }
         style={{ background: 'var(--pm-zone-fill)', borderColor: 'var(--pm-zone-stroke)', opacity: 0.7 }}
       >
@@ -680,17 +683,20 @@ function Row({
     )
   }
   // Identical permanents stack. A card the engine is asking for, or an
-  // attacker during blocks, or the hovered card, stays its own stack.
-  const groups = groupPermanents(
-    cards,
-    (c) => Boolean(c.selectable) || (expandAttackers && Boolean(c.attacking)) || c.id === hoveredId,
-  )
+  // attacker during blocks, stays its own stack. Hovering used to expand a
+  // stack into singles as well, which re-laid-out the whole band -- every
+  // card in it sliding -- on every pointer crossing; the zoom preview is the
+  // hover's answer, and a click on a stack already lands on the member the
+  // engine wants.
+  const groups = groupPermanents(cards, (c) => Boolean(c.selectable) || (expandAttackers && Boolean(c.attacking)))
   return (
-    // Both groups size to their content. The card width was already chosen so
-    // every stack in the band fits on one line; capping the lands at half the
-    // band undid that and pushed five lands sideways into a scrollbar.
+    // The battlefield box takes the band's spare width, empty or not, so the
+    // lands box stays at the right edge. It used to grow only while empty:
+    // the first permanent played shrank it to its content and the lands
+    // slid left to sit beside it. The lands box keeps to its content; capping
+    // it at half the band once pushed five lands sideways into a scrollbar.
     <div
-      className={'rounded-xl border px-2 pb-2 pt-1 ' + (grow ? 'min-w-0' : 'shrink-0')}
+      className={'rounded-xl border px-2 pb-2 pt-1 ' + (grow ? 'min-w-0 flex-1 basis-40' : 'ml-auto shrink-0')}
       style={{ background: 'var(--pm-zone-fill)', borderColor: 'var(--pm-zone-stroke)' }}
     >
       <p className="mb-1 text-[10px] uppercase [font-family:Cinzel,Georgia,serif] [letter-spacing:.2em] [color:var(--pm-ink-soft)]">
@@ -708,7 +714,6 @@ function Row({
                 width={width}
                 onClick={onCard}
                 onHover={onHover}
-                hovered={hoveredId === group.representative.id}
               />
             )
           }
@@ -744,7 +749,6 @@ function Row({
                   width={width}
                   onClick={onCard}
                   onHover={onHover}
-                  hovered={hoveredId === top.id}
                   badge={group.mode === 'collapsed' ? `×${group.count}` : undefined}
                   animate={false}
                 />

@@ -1,9 +1,9 @@
-import { useLayoutEffect, useRef } from 'react'
+import { memo, useLayoutEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { api } from '../lib/api'
 import { rememberCard } from '../lib/cardPositions'
-import { cardNames, counterBadges, keywordBadge, type BoardCard } from '../lib/boardCard'
+import { cardNames, counterBadges, keywordBadge, sameCard, type BoardCard } from '../lib/boardCard'
 import ManaCost from './ManaCost'
 
 interface Resolved {
@@ -40,27 +40,27 @@ const GEOMETRY: Record<CardSize, { w: number; h: number }> = {
  * time the bridge reports, and state kept per-card blinks out whenever its
  * card is disturbed.
  */
-export default function PlayCard({
-  card,
-  size = 'board',
-  onClick,
-  onHover,
-  hovered = false,
-  animate = true,
-  width,
-  badge,
-}: {
+interface PlayCardProps {
   card: BoardCard
   size?: CardSize
   onClick?: (id: number) => void
   onHover?: (card: BoardCard, rect: DOMRect | null, image?: string | null) => void
-  hovered?: boolean
   animate?: boolean
   /** Override the size's width; height follows the card's real ratio. */
   width?: number
   /** A count worn top-right, for a stack of identical permanents. */
   badge?: string
-}) {
+}
+
+function PlayCardView({
+  card,
+  size = 'board',
+  onClick,
+  onHover,
+  animate = true,
+  width,
+  badge,
+}: PlayCardProps) {
   // A face-down card has no face to show, whoever owns it. Forge blanks the
   // live state, so the name that arrives is a placeholder anyway.
   const hidden = card.name === '(hidden)' || card.faceDown === true
@@ -86,7 +86,7 @@ export default function PlayCard({
     const before = rememberCard(card.id, now)
     // Never animate the card the pointer is on: sliding it out from under the
     // cursor fires a mouseleave and takes the preview with it.
-    if (!animate || !before || hovered) return
+    if (!animate || !before || node.matches(':hover')) return
     const dx = before.left - now.left
     const dy = before.top - now.top
     if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return
@@ -145,6 +145,9 @@ export default function PlayCard({
           // Sky is the engine ASKING for this card; emerald is the engine
           // saying you could act on it if you wanted. Emerald ranks above hover
           // so playability does not flicker off under the pointer.
+          // The hover highlight is CSS, not state: a hover used to re-render the
+          // whole table, and every card re-measured itself for its zone
+          // animation on the way. Now the pointer touches nothing but a style.
           card.selectable
             ? 'border-sky-400 ring-2 ring-sky-400/70 shadow-[0_0_12px_rgba(56,189,248,0.45)]'
             : card.attacking
@@ -153,9 +156,7 @@ export default function PlayCard({
                 ? 'border-amber-400 ring-1 ring-amber-400/60'
                 : card.weak
                   ? 'border-emerald-500/80 ring-1 ring-emerald-500/40'
-                  : hovered
-                    ? 'border-sky-300'
-                    : 'border-slate-700',
+                  : 'border-slate-700 hover:border-sky-300',
           live ? 'cursor-pointer' : 'cursor-default',
           card.sick ? 'opacity-70' : '',
         ].join(' ')}
@@ -274,3 +275,17 @@ export default function PlayCard({
     </span>
   )
 }
+
+const PlayCard = memo(
+  PlayCardView,
+  (prev, next) =>
+    sameCard(prev.card, next.card) &&
+    prev.size === next.size &&
+    prev.width === next.width &&
+    prev.badge === next.badge &&
+    prev.animate === next.animate &&
+    prev.onClick === next.onClick &&
+    prev.onHover === next.onHover,
+)
+
+export default PlayCard

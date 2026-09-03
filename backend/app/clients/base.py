@@ -274,6 +274,15 @@ class ExternalClient:
         response = await self._send(method, url, **kwargs)
         return response.json()
 
+    async def request_text(self, path: str, *, method: str = "GET", **kwargs: Any) -> str:
+        """Request a page as text -- for the sources that publish HTML, not JSON.
+
+        Same limiter, breaker, robots check and retries as :meth:`request_json`.
+        """
+        url = path if path.startswith("http") else f"{self.base_url}{path}"
+        response = await self._send(method, url, **kwargs)
+        return response.text
+
     async def download(self, url: str, destination: Path, *, chunk_bytes: int = 1 << 20) -> int:
         """Stream a URL to disk.
 

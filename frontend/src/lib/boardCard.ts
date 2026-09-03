@@ -111,3 +111,35 @@ export function keywordBadge(keyword: string): string {
   if (words.length === 1) return k.slice(0, 9) + '…'
   return words.map((w) => w[0]?.toUpperCase() ?? '').join('')
 }
+
+/**
+ * What the eye would notice changing on a card. Two snapshots of the same
+ * card are different objects every 700ms; comparing the facts instead of the
+ * reference keeps thirty cards from re-rendering -- and re-measuring -- when
+ * nothing about them moved.
+ */
+export function sameCard(a: BoardCard, b: BoardCard): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.tapped === b.tapped &&
+    a.selectable === b.selectable &&
+    a.weak === b.weak &&
+    a.attacking === b.attacking &&
+    a.blocking === b.blocking &&
+    a.sick === b.sick &&
+    a.token === b.token &&
+    a.faceDown === b.faceDown &&
+    a.commander === b.commander &&
+    a.damage === b.damage &&
+    a.power === b.power &&
+    a.toughness === b.toughness &&
+    a.loyalty === b.loyalty &&
+    a.cost === b.cost &&
+    a.types === b.types &&
+    a.attachedTo === b.attachedTo &&
+    (a.attached?.length ?? 0) === (b.attached?.length ?? 0) &&
+    (a.keywords ?? []).join('|') === (b.keywords ?? []).join('|') &&
+    JSON.stringify(a.counters ?? null) === JSON.stringify(b.counters ?? null)
+  )
+}

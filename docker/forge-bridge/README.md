@@ -448,3 +448,14 @@ argument, the name from the Arena's start panel, and calls `setName` on the
 seat itself, setting the preference in memory too so anything reading it
 agrees. Nothing is saved, so a blank field falls back to whatever the file
 holds.
+
+## Commander decks
+
+`RegisteredPlayer.forCommander(deck)` is the only constructor that moves a
+deck's `[Commander]` section into the command zone and sets 40 life. The
+plain `new RegisteredPlayer(deck)` shuffles the commanders into a 100-card
+library and starts at 20, and that is how every commander practice game had
+been played until 2026-09-03: the game type was Commander, the deck file was
+right, and the snapshot's `commanderCards` was always empty. `BridgeMain`
+now picks the constructor by game type. Verified with a partner pair on each
+side: both commanders in the command zone, life 37 after six turns.

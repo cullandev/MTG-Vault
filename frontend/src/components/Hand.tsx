@@ -29,13 +29,11 @@ export default function Hand({
   playing,
   onCard,
   onHover,
-  hoveredId,
 }: {
   cards: BoardCard[]
   playing: boolean
   onCard?: (id: number) => void
   onHover?: (card: BoardCard, rect: DOMRect | null, image?: string | null) => void
-  hoveredId?: number | null
 }) {
   const geometry = fanGeometry(cards.length)
 
@@ -51,39 +49,37 @@ export default function Hand({
       }
       className="flex shrink-0 items-end justify-center pb-1 pt-2"
     >
-      {cards.map((card, index) => {
-        const hovered = hoveredId === card.id
-        return (
-          <span
-            key={card.id}
-            style={{
+      {cards.map((card, index) => (
+        <span
+          key={card.id}
+          style={
+            {
               marginLeft: index === 0 ? 0 : geometry.overlap,
-              // Hovered: out of the arc, upright, and in front. Otherwise it
-              // sits where the fan puts it.
-              transform: hovered
-                ? `translateY(-${LIFT}px) scale(1.04)`
-                : `translateY(${geometry.arc(index).toFixed(1)}px) rotate(${geometry.rotation(index).toFixed(2)}deg)`,
+              // Where the fan puts this card; the lift on hover is CSS, so the
+              // pointer crossing a card re-renders nothing.
+              '--fan-y': `${geometry.arc(index).toFixed(1)}px`,
+              '--fan-rot': `${geometry.rotation(index).toFixed(2)}deg`,
+              '--fan-lift': `-${LIFT}px`,
               transformOrigin: 'bottom center',
               // Later cards sit over earlier ones, which is what makes a fan
               // read left-to-right; a hovered card jumps above all of them.
-              zIndex: hovered ? 60 : index,
-            }}
-            className="transition-transform duration-150 ease-out will-change-transform"
-          >
-            <PlayCard
-              card={card}
-              size="hand"
-              onClick={playing ? onCard : undefined}
-              onHover={onHover}
-              hovered={hovered}
-              // The fan already places this card with a transform of its own.
-              // Letting the zone animation run as well fights it, and a card
-              // arriving in hand lands crooked.
-              animate={false}
-            />
-          </span>
-        )
-      })}
+              zIndex: index,
+            } as React.CSSProperties
+          }
+          className="fan-card transition-transform duration-150 ease-out will-change-transform hover:z-[60]"
+        >
+          <PlayCard
+            card={card}
+            size="hand"
+            onClick={playing ? onCard : undefined}
+            onHover={onHover}
+            // The fan already places this card with a transform of its own.
+            // Letting the zone animation run as well fights it, and a card
+            // arriving in hand lands crooked.
+            animate={false}
+          />
+        </span>
+      ))}
     </div>
   )
 }

@@ -242,6 +242,7 @@ def test_the_scheduler_registers_every_job(settings: object) -> None:
         "legality_watch",
         "meta_gauntlet",
         "meta_snapshot",
+        "meta_top_decks",
         "price_alerts_eval",
         "price_sync",
         "scryfall_bulk_refresh",

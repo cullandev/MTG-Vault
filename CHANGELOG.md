@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.1.0 — real decks at the table, and an AI you can tune
+
+- **Commander top decks on the shelf.** The best-placed list of each of the
+  ten leading cEDH commanders in the newest meta snapshot is materialised as
+  a playable deck (source `meta_top`, "Commander (cEDH top list)"); partner
+  pairs are resolved from the archetype name. Job `meta_top_decks` runs
+  Tuesdays at 07:20, right after the snapshot; `POST /api/meta/top-decks/refresh`
+  and the Arena's **Pull top decks** button run it now. Each refresh replaces
+  only its own shelf, and a list you have physically built is kept.
+- **60-card top decks from MTGO.** A new `mtgo` meta source reads mtgo.com's
+  published Challenge results (the JSON each event page embeds) and puts five
+  lists per format on the shelf, named by what they play. Opt-in like every
+  source (ADR-016), and off in `.env.example`: add `mtgo` to
+  `META_SOURCES_ENABLED` to turn it on. `TOP_DECK_FORMATS` (default
+  `Modern,Standard`) chooses the formats, one request a second.
+  `ExternalClient.request_text` exists for sources that publish HTML.
+- **Commander decks reach the command zone.** The bridge seats a Commander
+  deck with Forge's `forCommander` constructor, the only one that moves the
+  `[Commander]` section to the command zone and sets 40 life. Every commander
+  practice game before this had been a 100-card constructed deck at 20 life.
+- **Choose the opponent's mind.** The start panel offers Forge's own AI
+  profiles (Default, Cautious, Reckless, Experimental) and **Deeper thinking**,
+  Forge's simulation AI, which plays each candidate spell forward before
+  choosing; slower and opt-in.
+- **The start panel says who plays what.** Two seats, **You play** and
+  **The AI plays**, the table's settings beneath, and a sentence stating the
+  game beside **Play** and **Watch AI vs AI**. The gauntlet's own cut-down
+  decks no longer appear in either seat.
+- **The AI shows its spells; the log links its cards.** An instant or sorcery
+  the AI puts on the stack is shown large in the middle of the table with its
+  caster and targets. Every card the game log names reads as a link with a
+  hover preview.
+- **Arena layout and performance.** The lands box holds the right edge when
+  the first permanent is played; hovering a stack no longer expands it; the
+  header's per-frame backdrop blur is gone and the atmosphere layers have
+  their own compositor layers; hover highlights are CSS rules and the seats
+  are memoised, so the 700 ms poll re-renders only cards whose facts changed.
+
 ## 1.0.0 — public release
 
 - **Version strings agree with the README.** `pyproject.toml`, `package.json`,

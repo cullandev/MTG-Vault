@@ -13,7 +13,7 @@ noVNC because there was no other way to play a game. Nothing streams now.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
@@ -50,6 +50,10 @@ class WatchRequest(BaseModel):
     """Let Forge play at full speed instead of pausing after the AI's plays."""
     name: str | None = Field(default=None, max_length=24)
     """What the table calls the person in seat one. Forge invents one otherwise."""
+    ai_profile: Literal["Default", "Cautious", "Reckless", "Experimental"] = "Default"
+    """Forge's AI personality. Reckless attacks into trades; Default holds back."""
+    ai_simulation: bool = False
+    """Forge's simulation AI: it plays spells forward before choosing. Slower."""
 
 
 class AnswerRequest(BaseModel):
@@ -107,6 +111,8 @@ async def watch(body: WatchRequest, db: Db) -> dict[str, Any]:
             "human": body.play,
             "pace": 0 if body.fast else PACE_MS,
             "name": (body.name or "").strip(),
+            "ai_profile": body.ai_profile,
+            "ai_simulation": body.ai_simulation,
         },
     )
     if isinstance(payload, dict) and payload.get("error"):

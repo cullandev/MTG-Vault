@@ -14,6 +14,21 @@ import type { Deck } from './types'
 
 export const META_SOURCE = 'gauntlet_meta'
 
+/** A real tournament list, materialised whole by the weekly top-decks job. */
+export const TOP_SOURCE = 'meta_top'
+
+/**
+ * What the Arena offers at all: your decks and the real top lists. The
+ * gauntlet's cuts stay in the gauntlet -- they were built to be measured
+ * against, not to be played, and the owner asked for them to go.
+ */
+/** Every source the gauntlet writes decks under: its cuts and its own builds. */
+export const GAUNTLET_SOURCES = new Set([META_SOURCE, 'gauntlet'])
+
+export function playable(decks: Deck[]): Deck[] {
+  return decks.filter((d) => !GAUNTLET_SOURCES.has(d.source) && (!d.archived || d.is_built))
+}
+
 /**
  * Decks of the same format, excluding the one you are playing.
  *
@@ -24,13 +39,13 @@ export const META_SOURCE = 'gauntlet_meta'
 export function eligibleOpponents(decks: Deck[], deckId: number | null): Deck[] {
   const mine = decks.find((d) => d.id === deckId)
   if (!mine) return []
-  return decks
+  return playable(decks)
     .filter((d) => d.id !== mine.id && d.format === mine.format)
     .sort((a, b) => {
-      // Real decks first, the meta cuts after; then by name.
-      const am = a.source === META_SOURCE ? 1 : 0
-      const bm = b.source === META_SOURCE ? 1 : 0
-      return am - bm || a.name.localeCompare(b.name)
+      // Your own decks first, the tournament lists after; then by name.
+      const at = a.source === TOP_SOURCE ? 1 : 0
+      const bt = b.source === TOP_SOURCE ? 1 : 0
+      return at - bt || a.name.localeCompare(b.name)
     })
 }
 
@@ -40,10 +55,12 @@ export function eligibleOpponents(decks: Deck[], deckId: number | null): Deck[] 
  */
 export function defaultOpponent(decks: Deck[], deckId: number | null): Deck | null {
   const eligible = eligibleOpponents(decks, deckId)
-  return eligible.find((d) => d.source !== META_SOURCE) ?? eligible[0] ?? null
+  return eligible.find((d) => d.source !== TOP_SOURCE) ?? eligible[0] ?? null
 }
 
-/** A word of warning beside the meta cuts, so picking one is a choice. */
+/** What a tournament list is, beside its name, so picking one is a choice. */
 export function opponentNote(deck: Deck): string | null {
-  return deck.source === META_SOURCE ? 'counterspell-heavy; Forge plays it poorly' : null
+  if (deck.source === TOP_SOURCE) return 'real tournament list; Forge plays combo fair to poorly'
+  if (GAUNTLET_SOURCES.has(deck.source)) return 'counterspell-heavy; Forge plays it poorly'
+  return null
 }

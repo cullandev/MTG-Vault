@@ -32,21 +32,26 @@ const noop = () => {}
 describe('Hand', () => {
   it('fans every card with its own tilt', () => {
     const cards = [1, 2, 3, 4, 5].map((i) => card(i, `Card ${i}`))
-    const { container } = wrap(<Hand cards={cards} playing={false} onHover={noop} hoveredId={null} />)
+    const { container } = wrap(<Hand cards={cards} playing={false} onHover={noop} />)
     const wrappers = Array.from(container.querySelectorAll<HTMLElement>('span.will-change-transform'))
     expect(wrappers).toHaveLength(5)
-    const rotations = wrappers.map((w) => /rotate\(([-\d.]+)deg\)/.exec(w.style.transform)?.[1])
+    // The tilt rides on a CSS variable the stylesheet's fan rule reads.
+    const rotations = wrappers.map((w) => w.style.getPropertyValue('--fan-rot').replace('deg', ''))
     expect(new Set(rotations).size).toBe(5)
     // Symmetric about the centre: the middle card is upright.
     expect(Number(rotations[2])).toBeCloseTo(0)
   })
 
-  it('lifts the hovered card out of the fan', () => {
+  it('places each card by CSS variables and lifts it on hover without state', () => {
     const cards = [1, 2, 3].map((i) => card(i, `Card ${i}`))
-    const { container } = wrap(<Hand cards={cards} playing={false} onHover={noop} hoveredId={2} />)
-    const wrappers = Array.from(container.querySelectorAll<HTMLElement>('span.will-change-transform'))
-    expect(wrappers[1]?.style.transform).toContain('translateY(-')
-    expect(wrappers[1]?.style.zIndex).toBe('60')
+    const { container } = wrap(<Hand cards={cards} playing={false} onHover={noop} />)
+    const wrappers = Array.from(container.querySelectorAll<HTMLElement>('span.fan-card'))
+    expect(wrappers).toHaveLength(3)
+    // The fan's placement rides on variables the stylesheet reads; the lift
+    // is the :hover rule, so a pointer crossing a card re-renders nothing.
+    expect(wrappers[1]?.style.getPropertyValue('--fan-rot')).toMatch(/deg$/)
+    expect(wrappers[1]?.style.getPropertyValue('--fan-lift')).toBe('-34px')
+    expect(wrappers[1]?.className).toContain('hover:z-[60]')
   })
 })
 

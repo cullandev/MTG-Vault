@@ -13,8 +13,11 @@ backups, decks with a real rules engine and physical allocation, ratings and
 brackets, the meta engine (tournament decklists decomposed into explained
 templates, one-tap generation from owned cards, always legal by property test),
 real AI-vs-AI battles through the optional Forge sidecar and a weekly gauntlet
-that measures the vault's decks against the ingested meta, the synergy engine
-(hidden decks clustered from combos, mechanical pairs and tournament
+that measures the vault's decks against the ingested meta, an Arena where you
+play your own decks against real tournament lists — the week's leading cEDH
+decks, and MTGO Challenge winners in Modern and Standard — with the opponent's
+AI personality your choice, the synergy engine (hidden decks clustered from
+combos, mechanical pairs and tournament
 co-occurrence), and Phase 6: an installable PWA and the wishlist/buy-list — see
 [CHANGELOG.md](CHANGELOG.md) for what exists today and
 [ARCHITECTURE.md](ARCHITECTURE.md) for where it is all going.

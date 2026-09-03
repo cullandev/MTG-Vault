@@ -27,6 +27,7 @@ from app.jobs import (
     housekeeping,
     legality_watch,
     meta_snapshot,
+    meta_top_decks,
     prices,
     scryfall_bulk,
     set_icons,
@@ -91,6 +92,13 @@ def build_scheduler(settings: Settings) -> AsyncIOScheduler:
             meta_snapshot.run,
             CronTrigger(day_of_week="tue", hour=7, minute=0),
             meta_snapshot.JOB_NAME,
+        ),
+        (
+            # Right after the snapshot: the week's leading cEDH lists become
+            # playable decks, and last week's that fell out of the top go.
+            meta_top_decks.run,
+            CronTrigger(day_of_week="tue", hour=7, minute=20),
+            meta_top_decks.JOB_NAME,
         ),
         (
             # Nightly, not weekly: a scanning evening should mean new suggested

@@ -305,6 +305,20 @@ async def refresh() -> dict[str, Any]:
     return {"enqueued": True, "job": meta_snapshot.JOB_NAME}
 
 
+@router.post("/meta/top-decks/refresh")
+async def refresh_top_decks() -> dict[str, Any]:
+    """Put the leading cEDH lists on the shelf now, from the latest snapshot.
+
+    Enqueued like the snapshot itself; a notification says what landed.
+    """
+    from app.jobs import meta_top_decks
+
+    task = asyncio.create_task(meta_top_decks.run(notify_always=True))
+    _refresh_tasks.add(task)
+    task.add_done_callback(_refresh_tasks.discard)
+    return {"enqueued": True, "job": meta_top_decks.JOB_NAME}
+
+
 class MatchupRequest(BaseModel):
     """Body of ``POST /api/matchup``."""
 

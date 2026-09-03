@@ -619,6 +619,7 @@ as zero.
 | POST | `/api/build-for-me/{archetype_key}/generate` | `{owned_only, max_cost_cents}` → `{deck, substitutions:[{out, in, reason, score}], buy_list, score, bracket, is_legal}` |
 | POST | `/api/build-for-me/{archetype_key}/create-deck` | materialises the generated deck as a theoretical deck → `{deck_id}` |
 | POST | `/api/meta/refresh` | admin-only manual trigger of the scheduled job; **never** invoked by a page load (ADR-016) |
+| POST | `/api/meta/top-decks/refresh` | enqueues `meta_top_decks` now (the Arena's **Pull top decks** button) → `{enqueued, job}`; a notification says what landed |
 
 ### 4.10 Synergy / hidden decks (Phase 8)
 
@@ -674,7 +675,7 @@ streamed desktop anywhere in the stack.
 
 | method | path | notes |
 |---|---|---|
-| POST | `/api/practice/watch` | `{deck_id, opponent_id?, play}` — one game against a format-matched `[Meta]` opponent. `play` seats a person in the first chair; otherwise both sides are the AI. `409` during a gauntlet run |
+| POST | `/api/practice/watch` | `{deck_id, opponent_id?, play, ai_profile?, ai_simulation?}` — one game against a format-matched opponent: a `[Meta]` deck or a top-deck shelf entry (`meta_top`), never the gauntlet's own cuts. `play` seats a person in the first chair; otherwise both sides are the AI. `ai_profile` is one of Forge's `Default`, `Cautious`, `Reckless`, `Experimental`; `ai_simulation` turns on Forge's slower simulation AI. Commander decks are seated with `forCommander` (command zone, 40 life). `409` during a gauntlet run |
 | GET | `/api/practice/watch/events` | `?since=N` → `{running, next, events[]}`; the page polls this at 700 ms |
 | POST | `/api/practice/watch/answer` | `{id, value}` — answers a prompt the engine is **blocked** inside |
 | POST | `/api/practice/watch/action` | `{value}` — `ok`, `cancel`, `pass`, `concede`, `card:<id>`, `player:<seat>` |
@@ -768,6 +769,7 @@ returns.
 | `image_cache_gc` | Mon 06:00 | 3 | LRU-evict to `IMAGE_CACHE_MAX_MB`; art_crops deleted after hashing |
 | `edhrec_refresh` | Tue 06:45 | 5 | only commanders actually used by a deck |
 | `meta_snapshot` | Tue 07:00 | 7 | fan-out, one sub-run per (format, source); success and failure both notify |
+| `meta_top_decks` | Tue 07:20 | — | the best-placed list of each of the ten leading cEDH commanders in the newest snapshot, plus five MTGO Challenge lists per `TOP_DECK_FORMATS` format when `mtgo` is opted in, materialised as playable `meta_top` decks for the Arena; each refresh replaces only its own shelf and keeps a list the owner has built; also on demand via `POST /api/meta/top-decks/refresh` |
 | `meta_gauntlet` | Thu 07:30 | — | fresh vault decks vs the ingested meta through Forge (§4.14); records a partial "skipped" run when `ENABLE_FORGE` is false |
 | `synergy_rebuild` | daily 05:50 | 8 | full rebuild (~1.2s live) so an evening's scanning is reclustered by morning; also triggerable after a large import |
 | `deck_refresh` | daily 05:55 | 8 | fresh cores become fresh shelf decks right after the rebuild — no button required |
@@ -857,7 +859,8 @@ All configuration is environment variables read once into a pydantic-settings ob
 | `BACKUP_DIR` | `${DATA_DIR}/backups` | |
 | `BACKUP_KEEP_DAYS` | `30` | |
 | `PRICE_MOVE_FLAG_PCT` | `15` | mover threshold |
-| `META_SOURCES_ENABLED` | `edhtop16` | comma list; opt-in per source (ADR-016) |
+| `META_SOURCES_ENABLED` | `edhtop16` | comma list; opt-in per source (ADR-016). `mtgo` adds mtgo.com's published Challenge results (HTML pages with embedded JSON; no API) for the 60-card top-deck shelf |
+| `TOP_DECK_FORMATS` | `Modern,Standard` | 60-card formats whose newest MTGO Challenge lists become playable decks; needs `mtgo` above |
 | `META_SNAPSHOT_INTERVAL_DAYS` | `7` | also the cache TTL for those sources |
 | `META_STALE_AFTER_DAYS` | `14` | flag, never hide |
 | `ENABLE_EDHREC` / `ENABLE_SPELLBOOK` | `true` | kill switches |
@@ -904,17 +907,17 @@ mtg-vault/
         rating/      heuristics.py brackets.py classify.py ai_review.py
                      battles.py combos_service.py edhrec_service.py matchup.py
                      score_service.py
-        meta/        ingest.py coverage.py generate.py
+        meta/        ingest.py coverage.py generate.py top_decks.py
         synergy/     patterns.py graph.py clustering.py commander.py
                      assemble.py rebuild.py
         audit.py  images.py
       clients/
         base.py  scryfall.py  edhrec.py  spellbook.py  edhtop16.py  moxfield.py
-        anthropic_client.py  forge.py
+        mtgo.py  anthropic_client.py  forge.py
       jobs/
         runner.py  scheduler.py  scryfall_bulk.py  hash_index.py  prices.py
-        backup.py  meta_snapshot.py  synergy_rebuild.py  legality_watch.py
-        edhrec_refresh.py            (image GC lives in backup.py)
+        backup.py  meta_snapshot.py  meta_top_decks.py  synergy_rebuild.py
+        legality_watch.py  edhrec_refresh.py   (image GC lives in backup.py)
       data/
         bracket_patterns.yaml  synergy_patterns.yaml  functional_quotas.yaml
         csv_flavours.yaml
