@@ -7,6 +7,7 @@ seek into a scan fails the build.
 
 from __future__ import annotations
 
+import gc
 import json
 import time
 import tracemalloc
@@ -262,7 +263,7 @@ def _write_big_bulk(path: Path, count: int) -> None:
 
 @pytest.mark.slow
 def test_bulk_import_memory_is_bounded_by_batch_size(db: DbSession, tmp_path: Path) -> None:
-    """ADR-004. The file is streamed, so peak allocation tracks the batch, not the file.
+    """ADR-004. The file is streamed, so what the importer holds tracks the batch, not the file.
 
     Measured with tracemalloc rather than RSS so the assertion is about *our*
     allocations and does not depend on the allocator returning pages to the OS.
@@ -272,21 +273,35 @@ def test_bulk_import_memory_is_bounded_by_batch_size(db: DbSession, tmp_path: Pa
     size_mb = bulk.stat().st_size / 1024 / 1024
     assert size_mb > 8, f"fixture too small to be meaningful ({size_mb:.1f} MB)"
 
+    # Sampled after every batch is committed and its buffers cleared: this is what
+    # the importer *keeps* while it works through the file. A json.load() importer
+    # holds the whole parsed file here -- several times ``size_mb`` -- from the
+    # first batch to the last.
+    retained_mb: list[float] = []
+
+    def sample(_stats: scryfall_bulk.ImportStats) -> None:
+        retained_mb.append(tracemalloc.get_traced_memory()[0] / 1024 / 1024)
+
+    gc.collect()
     tracemalloc.start()
     try:
-        stats = scryfall_bulk.import_bulk(db, bulk, batch_size=2000)
+        stats = scryfall_bulk.import_bulk(db, bulk, batch_size=2000, progress=sample)
         _current, peak = tracemalloc.get_traced_memory()
     finally:
         tracemalloc.stop()
 
     peak_mb = peak / 1024 / 1024
     assert stats.cards_written == 20_000
-    assert peak_mb < 120, f"peak python allocation {peak_mb:.0f} MB"
-    # Streaming means peak memory tracks the batch size plus fixed overhead (statement
-    # compilation caches and the like), not the file. The allowance is one batch of
-    # rows (a few MB) plus 45 MB of fixed overhead -- json.load() on the same file
-    # peaks at several times the file size and blows straight through this.
-    assert peak_mb < 45 + size_mb, f"peak {peak_mb:.0f} MB for a {size_mb:.0f} MB file"
+    assert retained_mb, "the progress callback never fired"
+    assert max(retained_mb) < 20, f"retained {max(retained_mb):.0f} MB between batches"
+    assert max(retained_mb) < size_mb, "retained memory should not scale with the file"
+    # The transient peak is SQLAlchemy compiling one multi-row INSERT -- 2 000 rows
+    # times every column is tens of thousands of bind parameters, and what that
+    # costs varies with the compiler's path and how much else the process has
+    # loaded (about 50 MB in an otherwise empty process, about 100 MB after the app
+    # has been started once). It is not a streaming property, so it gets a loose
+    # guard against gross regressions rather than a number the suite's order can move.
+    assert peak_mb < 200, f"peak python allocation {peak_mb:.0f} MB"
 
 
 @pytest.mark.slow
